@@ -1,0 +1,39 @@
+{
+  "funds": [
+    {
+      "fund_id": "hdfc_small_cap",
+      "fund_name": "HDFC Small Cap Fund - Direct Growth",
+      "amc": "HDFC",
+      "category": "Small Cap",
+      "url": "https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580"
+    },
+    {
+      "fund_id": "axis_elss",
+      "fund_name": "Axis ELSS Tax Saver Fund - Direct Plan Growth",
+      "amc": "Axis",
+      "category": "ELSS / Tax Saver",
+      "url": "https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631"
+    },
+    {
+      "fund_id": "axis_large_mid_cap",
+      "fund_name": "Axis Large & Mid Cap Fund - Direct Growth",
+      "amc": "Axis",
+      "category": "Large & Mid Cap",
+      "url": "https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028"
+    },
+    {
+      "fund_id": "axis_nifty_100",
+      "fund_name": "Axis Nifty 100 Index Fund - Direct Growth",
+      "amc": "Axis",
+      "category": "Index (Large Cap)",
+      "url": "https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056"
+    },
+    {
+      "fund_id": "hdfc_pvt_bank_etf",
+      "fund_name": "HDFC Nifty Private Bank ETF",
+      "amc": "HDFC",
+      "category": "ETF (Sectoral)",
+      "url": "https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349"
+    }
+  ]
+}

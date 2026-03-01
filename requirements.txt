@@ -1,0 +1,27 @@
+# Web scraping
+playwright==1.44.0
+beautifulsoup4==4.12.3
+lxml==5.2.2
+
+# Vector store & embeddings
+chromadb==0.5.3
+sentence-transformers==3.0.1
+
+# LLM
+groq==0.9.0
+
+# Orchestration
+langchain==0.2.6
+langchain-community==0.2.6
+langchain-chroma==0.1.2
+
+# UI
+streamlit==1.36.0
+
+# Utilities
+python-dotenv==1.0.1
+httpx==0.27.0
+
+# Testing
+pytest==8.2.2
+pytest-playwright==0.5.1

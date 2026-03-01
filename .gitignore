@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# Vector store (rebuilt on startup)
+chroma_db/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
