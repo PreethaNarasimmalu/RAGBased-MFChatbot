@@ -5,20 +5,65 @@
 
 ---
 
+## 0. Phase Plan
+
+The project is divided into six sequential phases. Each phase produces a testable, independently verifiable deliverable before the next begins.
+
+```
+Phase 1 ── Foundation & Configuration
+            requirements.txt · .env.example · sources.csv · disclaimer.txt · README.md
+
+Phase 2 ── Data Ingestion Pipeline
+            fetcher.py · normaliser.py · chunker.py · ingest_pipeline.py
+            ► Output: data/processed/ JSON chunks with metadata
+
+Phase 3 ── Retrieval Infrastructure
+            embedder.py · vector_store.py · retriever.py
+            ► Output: populated ChromaDB index, verified with test queries
+
+Phase 4 ── Chatbot Core
+            safety_gate.py · query_preprocessor.py
+            prompt_templates.py · llm_client.py · pipeline.py
+            ► Output: CLI-testable end-to-end RAG pipeline
+
+Phase 5 ── User Interface
+            ui/app.py  (Streamlit chat UI)
+            ► Output: running web app with disclaimer, chat history, citations
+
+Phase 6 ── Evaluation & QA
+            eval/sample_qa.md · eval/eval_queries.json
+            ► Output: verified answers for all query types; edge-case failures documented
+```
+
+### Phase Gate Criteria
+
+| Phase | Gate — must pass before next phase starts |
+|---|---|
+| 1 | All source URLs return HTTP 200; `sources.csv` peer-reviewed |
+| 2 | All 4 funds have ≥ 1 chunk per doc type; no empty processed files |
+| 3 | Test query for each fund returns correct top-3 chunks manually verified |
+| 4 | All 9 factual query types return correct answers; all refusal triggers refuse |
+| 5 | Disclaimer visible; citations shown; PII/advice queries refused in UI |
+| 6 | ≥ 90 % of sample Q&A pairs answered correctly with correct source cited |
+
+---
+
 ## 1. Scope
 
 ### AMC
 **Axis Mutual Fund** — one of India's top 10 AMCs by AUM; rich public documentation on axismf.com and AMFI/SEBI portals.
 
-### Schemes Covered (5)
+### Schemes Covered (4)
 
-| # | Scheme Name | Category | ISIN (Growth – Direct) |
-|---|---|---|---|
-| 1 | Axis Bluechip Fund | Large Cap | INF846K01EW2 |
-| 2 | Axis Flexi Cap Fund | Flexi Cap | INF846K01DP8 |
-| 3 | Axis Long Term Equity Fund | ELSS (Tax Saver) | INF846K01131 |
-| 4 | Axis Midcap Fund | Mid Cap | INF846K01EY8 |
-| 5 | Axis Small Cap Fund | Small Cap | INF846K01EX0 |
+> **Note:** Axis Bluechip Fund was officially renamed **Axis Large Cap Fund** w.e.f. 2 June 2025.
+> The chatbot must recognise both names as the same scheme.
+
+| # | Scheme Name (current) | Former Name | Category | ISIN (Direct – Growth) |
+|---|---|---|---|---|
+| 1 | Axis ELSS Tax Saver Fund | — | ELSS / Tax Saver | INF846K01131 |
+| 2 | Axis Nifty 50 Index Fund | — | Index (Large Cap) | INF846K01WT5 |
+| 3 | Axis Large Cap Fund | Axis Bluechip Fund | Large Cap | INF846K01EW2 |
+| 4 | Axis Small Cap Fund | — | Small Cap | INF846K01EX0 |
 
 ### Factual Query Types Supported
 
@@ -111,33 +156,49 @@ Layer 3 – Generation
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Source catalogue (15–25 URLs):**
+**Source catalogue — 14 verified URLs across 4 funds:**
 
-| # | URL | Doc Type | Schemes |
-|---|-----|----------|---------|
-| 1 | axismf.com/mutual-fund/axis-bluechip-fund | Scheme page | Bluechip |
-| 2 | axismf.com/mutual-fund/axis-flexi-cap-fund | Scheme page | Flexi Cap |
-| 3 | axismf.com/mutual-fund/axis-long-term-equity-fund | Scheme page | ELSS |
-| 4 | axismf.com/mutual-fund/axis-midcap-fund | Scheme page | Midcap |
-| 5 | axismf.com/mutual-fund/axis-small-cap-fund | Scheme page | Small Cap |
-| 6 | axismf.com/downloads → Bluechip Factsheet (PDF) | Factsheet | Bluechip |
-| 7 | axismf.com/downloads → Flexi Cap Factsheet (PDF) | Factsheet | Flexi Cap |
-| 8 | axismf.com/downloads → ELSS Factsheet (PDF) | Factsheet | ELSS |
-| 9 | axismf.com/downloads → Midcap Factsheet (PDF) | Factsheet | Midcap |
-| 10 | axismf.com/downloads → Small Cap Factsheet (PDF) | Factsheet | Small Cap |
-| 11 | axismf.com/downloads → Bluechip KIM/SID (PDF) | KIM/SID | Bluechip |
-| 12 | axismf.com/downloads → Flexi Cap KIM/SID (PDF) | KIM/SID | Flexi Cap |
-| 13 | axismf.com/downloads → ELSS KIM/SID (PDF) | KIM/SID | ELSS |
-| 14 | axismf.com/downloads → Midcap KIM/SID (PDF) | KIM/SID | Midcap |
-| 15 | axismf.com/downloads → Small Cap KIM/SID (PDF) | KIM/SID | Small Cap |
-| 16 | amfiindia.com/nav-history | NAV / scheme data | All 5 |
-| 17 | amfiindia.com/research-information/other-data/scheme-performance | Benchmark info | All 5 |
-| 18 | sebi.gov.in/legal/circulars → TER circular | Expense ratio rules | General |
-| 19 | sebi.gov.in/legal/circulars → Riskometer circular | Riskometer rules | General |
-| 20 | axismf.com/faq | AMC FAQ page | General |
-| 21 | indmoney.com/help → capital-gains-statement | Statement guide | General |
-| 22 | indmoney.com/help → ELSS-tax-proof | ELSS tax doc guide | ELSS |
-| 23 | indmoney.com/help → account-statement | Account statement guide | General |
+> All PDF URLs below use percent-encoded spaces (%20). Scheme pages return 403 to bots
+> but are valid; the ingestion fetcher must use a browser User-Agent + retry logic.
+
+#### Axis ELSS Tax Saver Fund
+
+| # | Full URL | Doc Type |
+|---|----------|----------|
+| 1 | `https://www.axismf.com/mutual-funds/equity-funds/axis-elss-tax-saver-fund/ts-dg/direct` | Scheme page |
+| 2 | `https://www.axismf.com/cms/sites/default/files/Statutory/KIM%20and%20Application%20Form%20-%20Axis%20ELSS%20Tax%20Saver%20Fund.pdf` | KIM |
+| 3 | `https://www.axismf.com/cms/sites/default/files/Statutory/Axis%20ELSS%20Tax%20Saver%20Fund%20-%20SID.pdf` | SID |
+| 4 | `https://www.axismf.com/cms/sites/default/files/pdf-factsheets/Axis%20ELSS%20Tax%20Saver%20Fund%20-%20PPT%20-%20%20May%202025.pdf` | Factsheet |
+
+#### Axis Nifty 50 Index Fund
+
+| # | Full URL | Doc Type |
+|---|----------|----------|
+| 5 | `https://www.axismf.com/mutual-funds/index-funds/axis-nifty-50-index-fund/n5-dg/direct` | Scheme page |
+| 6 | `https://www.axismf.com/cms/sites/default/files/Statutory/KIM-Axis-Nifty-50-Index-Fund.pdf` | KIM |
+| 7 | `https://www.axismf.com/cms/sites/default/files/Statutory/SID%20-%20Axis%20Nifty%2050%20Index%20Fund.pdf` | SID |
+| 8 | `https://www.axismf.com/cms/sites/default/files/pdf-factsheets/Axis%20Monthly%20Passive%20Factsheet%20-%20June%202025.pdf` | Factsheet (passive consolidated) |
+
+#### Axis Large Cap Fund (formerly Axis Bluechip Fund)
+
+| # | Full URL | Doc Type |
+|---|----------|----------|
+| 9  | `https://www.axismf.com/mutual-funds/equity-funds/axis-bluechip-fund/bc-dg/direct` | Scheme page |
+| 10 | `https://www.axismf.com/cms/sites/default/files/Statutory/KIM%20and%20Application%20Form%20-%20Axis%20Bluechip%20Fund.pdf` | KIM |
+| 11 | `https://www.axismf.com/cms/sites/default/files/Statutory/Axis%20Bluechip%20Fund%20-%20SID.pdf` | SID (mentions rename to Large Cap) |
+| 12 | `https://www.axismf.com/cms/sites/default/files/pdf-factsheets/Axis%20Fund%20Factsheet%20September-2025.pdf` | Factsheet (equity consolidated) |
+
+#### Axis Small Cap Fund
+
+| # | Full URL | Doc Type |
+|---|----------|----------|
+| 13 | `https://www.axismf.com/mutual-funds/equity-funds/axis-small-cap-fund/sc-dg/direct` | Scheme page |
+| 14 | `https://www.axismf.com/cms/sites/default/files/Statutory/KIM%20and%20Application%20Form%20-%20Axis%20Small%20Cap%20Fund.pdf` | KIM |
+| 15 | `https://www.axismf.com/cms/sites/default/files/Statutory/Axis%20Small%20Cap%20Fund%20-%20SID.pdf` | SID (updated May 2025; replaces /NFO/ version) |
+| 16 | `https://www.axismf.com/cms/sites/default/files/pdf-factsheets/Axis%20Small%20Cap%20Fund%20-%20PPT%20-%20Aug%202025.pdf` | Factsheet |
+
+> **Note on consolidated factsheets:** Sources 8 and 12 are consolidated PDFs covering
+> multiple funds. During ingestion, only chunks tagged to the relevant scheme are retained.
 
 ---
 
@@ -199,7 +260,11 @@ User Query
     ├─► Query Pre-processor
     │       • Lower-case, strip PII patterns (regex)
     │       • Scheme name normaliser
-    │           "axis bluechip" → "Axis Bluechip Fund"
+    │           "axis bluechip"      → "Axis Large Cap Fund"
+    │           "axis large cap"     → "Axis Large Cap Fund"
+    │           "elss", "tax saver"  → "Axis ELSS Tax Saver Fund"
+    │           "nifty 50", "index"  → "Axis Nifty 50 Index Fund"
+    │           "small cap", "smallcap" → "Axis Small Cap Fund"
     │
     ├─► Metadata Filter Builder
     │       Detected scheme  → filter: scheme="Axis Bluechip Fund"
@@ -497,4 +562,5 @@ investment adviser (https://www.sebi.gov.in/investors.html).
 
 ---
 
-*Architecture version: 1.0 · Last revised: 2026-03-01*
+*Architecture version: 1.1 · Last revised: 2026-03-01*
+*Schemes: 4 (ELSS, Nifty 50 Index, Large Cap, Small Cap) · Sources: 16 URLs verified*
