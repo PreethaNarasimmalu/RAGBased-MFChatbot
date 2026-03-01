@@ -200,6 +200,12 @@ Layer 3 – Generation
 > **Note on consolidated factsheets:** Sources 8 and 12 are consolidated PDFs covering
 > multiple funds. During ingestion, only chunks tagged to the relevant scheme are retained.
 
+#### General (Platform — INDmoney / Axis MF)
+
+| #  | Full URL | Doc Type |
+|----|----------|----------|
+| 17 | `https://www.axismf.com/account-statement` | Account statement download guide |
+
 ---
 
 ### 3.2 Document Processing Pipeline
@@ -261,7 +267,7 @@ User Query
     │       • Lower-case, strip PII patterns (regex)
     │       • Scheme name normaliser
     │           "axis bluechip"      → "Axis Large Cap Fund"
-    │           "axis large cap"     → "Axis Large Cap Fund"
+    │           "axis large cap"     → "Axis Bluechip Fund"
     │           "elss", "tax saver"  → "Axis ELSS Tax Saver Fund"
     │           "nifty 50", "index"  → "Axis Nifty 50 Index Fund"
     │           "small cap", "smallcap" → "Axis Small Cap Fund"
@@ -529,7 +535,7 @@ Query strings are never logged to disk. No session state stores user input beyon
 |---|---|---|
 | Factsheets updated monthly by AMC | Data can be 1-month stale | Automated monthly re-ingestion; `fetched_at` shown in every answer |
 | PDF table extraction accuracy varies | Some fee tables may be misread | Manual review of chunked output before go-live |
-| Only 5 Axis MF schemes in scope | Cannot answer about other Axis/other AMC schemes | Explicit out-of-scope message with link to axismf.com |
+| Only 4 Axis MF schemes in scope | Cannot answer about other Axis/other AMC schemes | Explicit out-of-scope message with link to axismf.com |
 | LLM may hallucinate if context is weak | Incorrect factual answer | `min_similarity_threshold` set; fallback to "I could not find this fact—see [source]" |
 | INDmoney help pages may change URL | Dead citation link | Periodic link-check script (`requests.head`) |
 | No real-time NAV | Cannot answer "today's NAV" | Redirect to amfiindia.com NAV page |
