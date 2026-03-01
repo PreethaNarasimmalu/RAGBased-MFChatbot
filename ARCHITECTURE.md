@@ -68,6 +68,12 @@ Phase 5 ── User Interface
 Phase 6 ── Evaluation & QA
             eval/test_queries.json · eval/expected_answers.md
             ► Output: All 5 funds × all fact types verified; refusals confirmed
+
+Phase 7 ── Scheduler (GitHub Actions)
+            .github/workflows/daily_scrape.yml
+            ► Runs Playwright scraper daily at midnight IST on a GitHub-hosted runner
+            ► Commits updated data/raw/*.json back to the repo
+            ► Streamlit app rebuilds ChromaDB from JSON on next startup
 ```
 
 ### Phase Gate Criteria
@@ -80,6 +86,7 @@ Phase 6 ── Evaluation & QA
 | 4 | All factual query types pass; advice/PII queries correctly refused |
 | 5 | Disclaimer visible at all times; citation shown in every answer; PII/advice refused in UI |
 | 6 | ≥ 90% of sample Q&A pairs correct with correct citation |
+| 7 | Workflow runs successfully on GitHub Actions; updated JSON committed to repo; Streamlit reads new data on restart |
 
 ---
 
@@ -122,6 +129,20 @@ SAFE REFUSAL HANDLER
   "This assistant provides facts only and does not offer investment
    advice. For guidance, consult a SEBI-registered investment adviser:
    https://www.sebi.gov.in/investors.html"
+─────────────────────────────────────────────────────────────────
+
+SCHEDULER (GitHub Actions — runs separately from the app)
+─────────────────────────────────────────────────────────────────
+  GitHub Actions (daily cron: midnight IST)
+    │
+    ├─► Checkout repo on Ubuntu runner
+    ├─► Install Python + Playwright + Chromium
+    ├─► Run scraper.py → writes data/raw/*.json
+    ├─► Compare with previous JSON (detect changes)
+    ├─► git commit + push updated JSON to repo
+    │
+  Streamlit App (on next startup / reboot)
+    └─► Reads data/raw/*.json → rebuilds ChromaDB in memory
 ─────────────────────────────────────────────────────────────────
 ```
 
@@ -325,6 +346,38 @@ Layout:
 
 ---
 
+### Phase 7 — Scheduler (GitHub Actions)
+
+```
+Trigger: GitHub Actions cron schedule — runs daily at 18:30 UTC (midnight IST)
+
+Workflow steps (.github/workflows/daily_scrape.yml):
+┌─────────────────────────────────────────────────────────────────┐
+│  1. Checkout repository                                           │
+│  2. Set up Python 3.11                                           │
+│  3. pip install -r requirements.txt                              │
+│  4. playwright install chromium                                  │
+│  5. Run: python scraping/scraper.py                             │
+│       → writes updated data/raw/<fund_id>.json for all 5 funds  │
+│  6. Check git diff on data/raw/                                  │
+│       → If no changes: skip commit (data unchanged)             │
+│       → If changed: git commit + push to main branch            │
+│  7. Streamlit Cloud auto-redeploys OR app rebuilds               │
+│     ChromaDB from JSON on next user request                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key behaviour:**
+- Same `scraper.py` used locally and in CI — no separate scraping code
+- Only commits if data actually changed (avoids noise commits)
+- `scraped_at` timestamp in JSON updates automatically → "Last updated" shown to users reflects real data freshness
+- If scrape fails (INDmoney blocks, timeout): workflow fails visibly in GitHub Actions log; previous JSON is preserved unchanged; app continues serving stale-but-valid data
+
+**Note on `data/raw/` gitignore:**
+Unlike local development (where `data/raw/` is gitignored), for Streamlit deployment the `data/raw/*.json` files **must be committed** to the repo. The GitHub Actions workflow commits them; Streamlit reads them on startup. The `.gitignore` must exclude `chroma_db/` but include `data/raw/`.
+
+---
+
 ### Phase 6 — Evaluation & QA
 
 **Test matrix — 5 funds × 7 fact types = 35 factual queries**
@@ -389,7 +442,11 @@ RAGBased-MFChatbot/
 │   ├── test_queries.json         ← 35 factual + 11 refusal test cases
 │   └── expected_answers.md       ← ground-truth answers with citations
 │
-└── chroma_db/                    ← persisted ChromaDB vector store (gitignored)
+├── .github/
+│   └── workflows/
+│       └── daily_scrape.yml      ← GitHub Actions cron (midnight IST daily)
+│
+└── chroma_db/                    ← ChromaDB rebuilt in memory on startup (gitignored)
 ```
 
 ---
@@ -407,6 +464,7 @@ RAGBased-MFChatbot/
 | UI | Streamlit | Fastest path to working chat interface |
 | Config | python-dotenv | Keep API keys out of code |
 | Testing | pytest | Unit tests for safety gate + retriever |
+| Scheduler | GitHub Actions (cron) | Daily scrape on free GitHub-hosted Ubuntu runner; no extra infra |
 
 ---
 
@@ -426,6 +484,9 @@ When a user specifies a fund, the vector search is filtered to only that fund's 
 
 ### Why two-stage safety gate (regex → LLM)?
 Regex handles clear-cut PII and obvious advice keywords in microseconds, at zero cost. The LLM classifier only runs on edge cases, keeping latency and API cost low while maintaining accuracy.
+
+### Why GitHub Actions for scheduling instead of APScheduler?
+Streamlit Cloud does not support system cron jobs or persistent background threads. APScheduler runs inside the app process — if the app restarts (Streamlit Cloud sleeps inactive apps), the schedule is lost. GitHub Actions runs on a separate GitHub-hosted Ubuntu VM entirely independent of the Streamlit app. It uses the exact same `scraper.py` (Playwright + Chromium) as local development, commits fresh JSON to the repo, and Streamlit reads it on next startup. No extra infrastructure or cost needed.
 
 ### No PII stored anywhere
 Query strings are not logged to disk. No analytics, no session persistence beyond the active browser tab. No PAN/Aadhaar/phone fields exist in the data model at any layer.
@@ -471,6 +532,7 @@ adviser: https://www.sebi.gov.in/investors.html
 
 ---
 
-*Architecture version: 2.0 · Date: 2026-03-01*
+*Architecture version: 2.1 · Date: 2026-03-01*
 *Funds: 5 (HDFC Small Cap, Axis ELSS, Axis Large & Mid Cap, Axis Nifty 100, HDFC Pvt Bank ETF)*
 *Source: INDmoney public fund pages (web scraping via Playwright)*
+*Scheduler: GitHub Actions daily cron → commits data/raw/*.json → Streamlit reads on startup*
