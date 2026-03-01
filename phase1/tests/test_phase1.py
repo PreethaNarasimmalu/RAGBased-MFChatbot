@@ -122,11 +122,27 @@ def test_all_fund_urls_reachable_via_playwright():
 
     failed = []
 
-    # Use the locally cached Chromium executable
-    chromium_path = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome"
+    # Resolve the Chromium executable path dynamically across platforms
+    import sys, os
+    chromium_path = None
+    if sys.platform != "win32":
+        # Common Linux/CI paths (try in order)
+        candidates = [
+            os.path.expanduser("~/.cache/ms-playwright/chromium-1194/chrome-linux/chrome"),
+            "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome",
+        ]
+        for c in candidates:
+            if os.path.isfile(c):
+                chromium_path = c
+                break
+    # On Windows (or if no cached binary found) let Playwright use its default
+
+    launch_kwargs = {"headless": True}
+    if chromium_path:
+        launch_kwargs["executable_path"] = chromium_path
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, executable_path=chromium_path)
+        browser = p.chromium.launch(**launch_kwargs)
         context = browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
