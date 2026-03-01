@@ -305,7 +305,10 @@ Funds in scope: HDFC Small Cap Fund, Axis ELSS Tax Saver Fund,
 Axis Large & Mid Cap Fund, Axis Nifty 100 Index Fund,
 HDFC Nifty Private Bank ETF.
 ───────────────────────────────────────────────────
-LLM:         gpt-4o-mini  OR  gemini-1.5-flash
+LLM:         llama-3.3-70b-versatile  (via Groq API)
+             Base URL: https://api.groq.com/openai/v1
+             API key:  GROQ_API_KEY  (set in .env)
+             SDK:      groq-python  (OpenAI-API-compatible)
 Temperature: 0.0   (deterministic; no creative liberty)
 Max tokens:  200
 ```
@@ -460,7 +463,7 @@ RAGBased-MFChatbot/
 | HTML parsing | BeautifulSoup 4 | Extract specific fact fields from rendered HTML |
 | Embedding | `text-embedding-3-small` (OpenAI) or `all-MiniLM-L6-v2` (local) | Cost vs. offline trade-off |
 | Vector store | ChromaDB (local) | Zero infra; sufficient for 35-chunk corpus |
-| LLM | `gpt-4o-mini` or `gemini-1.5-flash` | Low cost; factual, short answers only |
+| LLM | Groq API (`llama-3.3-70b-versatile`) | Ultra-fast inference; free tier available; OpenAI-compatible SDK |
 | UI | Streamlit | Fastest path to working chat interface |
 | Config | python-dotenv | Keep API keys out of code |
 | Testing | pytest | Unit tests for safety gate + retriever |
