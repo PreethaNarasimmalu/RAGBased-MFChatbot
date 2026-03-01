@@ -89,14 +89,13 @@ def parse_fund_html(html: str, fund_meta: dict) -> dict:
     # 3. Minimum SIP Amount
     #    The 'value' field has format "₹100/₹100" (Lumpsum/SIP).
     #    We take the SIP part (index 1); fall back to full string if no '/'.
-    #    ETFs have no SIP and show "--" → stored as null.
+    #    ETFs show "--" on INDmoney (no SIP product) — stored as-is.
     min_sip_amount = None
     if "Min Lumpsum/SIP" in info:
         raw = info["Min Lumpsum/SIP"].get("value", "") or ""
         parts = raw.split("/")
         sip_part = (parts[1].strip() if len(parts) >= 2 else parts[0].strip())
-        if sip_part and sip_part != "--":
-            min_sip_amount = sip_part
+        min_sip_amount = sip_part or None
 
     # 4. Exit Load
     #    INDmoney stores the human-readable sentence in 'description' when a load

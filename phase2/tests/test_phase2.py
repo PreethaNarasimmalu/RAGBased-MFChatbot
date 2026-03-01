@@ -44,6 +44,7 @@ NON_NULLABLE_FIELDS = [
     "category",
     "expense_ratio",
     "exit_load",
+    "min_sip_amount",
     "riskometer",
     "benchmark",
     "source_url",
@@ -52,7 +53,7 @@ NON_NULLABLE_FIELDS = [
 
 # lock_in_period is nullable (null for all non-ELSS funds — that is correct)
 # axis_elss is the only fund where it must be non-null.
-# min_sip_amount is nullable for ETFs (hdfc_pvt_bank_etf trades on exchange, no SIP).
+# min_sip_amount for ETFs is "--" (INDmoney shows no SIP for exchange-traded funds).
 
 
 # ── Test 1: Source files exist ────────────────────────────────────────────────
@@ -149,16 +150,17 @@ def test_expense_ratio_looks_like_percentage(all_fund_data):
 
 
 def test_min_sip_amount_contains_rupee_symbol(all_fund_data):
-    """Min SIP values should include the rupee symbol (e.g. '₹100')."""
-    # ETFs trade on exchange — SIP may not apply; allow null for hdfc_pvt_bank_etf
+    """Min SIP values should include the rupee symbol (e.g. '₹100').
+    ETFs show '--' on INDmoney (no SIP product) — that is accepted as-is.
+    """
     for fid, data in all_fund_data.items():
         sip = data.get("min_sip_amount")
-        if sip is None:
+        if sip == "--":
             assert fid == "hdfc_pvt_bank_etf", (
-                f"{fid}.json: min_sip_amount is null — only acceptable for ETF funds"
+                f"{fid}.json: min_sip_amount is '--' — only expected for ETF funds"
             )
         else:
-            assert "₹" in sip or "Rs" in sip.lower(), (
+            assert sip and ("₹" in sip or "Rs" in sip.lower()), (
                 f"{fid}.json: min_sip_amount '{sip}' does not contain currency symbol"
             )
 
