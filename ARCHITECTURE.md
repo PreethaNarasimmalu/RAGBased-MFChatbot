@@ -114,7 +114,7 @@ RAG PIPELINE
     ├─► Context Assembly     chunk text + source_url + scraped_at
     │
     └─► LLM Generation       system prompt + context → ≤ 3-sentence answer
-                              + "Source: <url>  |  Last scraped: <date>"
+                              + "Source: <url>  |  Last updated: <date>"
 ─────────────────────────────────────────────────────────────────
 
 SAFE REFUSAL HANDLER
@@ -186,7 +186,7 @@ data/raw/<fund_id>.json  (structured JSON per fund)
 │  {                                                │
 │    "text": "The expense ratio of HDFC Small Cap   │
 │             Fund (Direct Growth) is 0.55% per     │
-│             annum as of the last scraped date.",  │
+│             annum as of the last updated date.",  │
 │    "fund":       "HDFC Small Cap Fund",           │
 │    "field":      "expense_ratio",                 │
 │    "source_url": "https://indmoney.com/...",      │
@@ -266,7 +266,7 @@ ONLY the context provided to you. Follow these rules strictly:
 
 1. Answer in ≤ 3 sentences.
 2. End every answer with:
-     Source: <url>  |  Last scraped: <scraped_at>
+     Source: <url>  |  Last updated: <scraped_at>
 3. If asked about investment advice, returns, or portfolio
    decisions, respond ONLY with the safe-refusal message.
 4. If context does not contain the answer, say:
@@ -312,7 +312,7 @@ Layout:
 │    Bot:  The exit load for Axis Large & Mid Cap Fund (Direct)   │
 │          is 1% if units are redeemed within 1 year of           │
 │          allotment. No exit load after 1 year.                  │
-│          Source: https://indmoney.com/...  |  Last scraped: ... │
+│          Source: https://indmoney.com/...  |  Last updated: ... │
 │  ─────────────────────────────────────────────────────────────  │
 │  [ Type your question here…                          ]  [Send]  │
 │                                                                  │
