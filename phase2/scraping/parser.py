@@ -89,19 +89,29 @@ def parse_fund_html(html: str, fund_meta: dict) -> dict:
     # 3. Minimum SIP Amount
     #    The 'value' field has format "₹100/₹100" (Lumpsum/SIP).
     #    We take the SIP part (index 1); fall back to full string if no '/'.
+    #    ETFs have no SIP and show "--" → stored as null.
     min_sip_amount = None
     if "Min Lumpsum/SIP" in info:
         raw = info["Min Lumpsum/SIP"].get("value", "") or ""
         parts = raw.split("/")
-        min_sip_amount = (parts[1].strip() if len(parts) >= 2 else parts[0].strip()) or None
+        sip_part = (parts[1].strip() if len(parts) >= 2 else parts[0].strip())
+        if sip_part and sip_part != "--":
+            min_sip_amount = sip_part
 
     # 4. Exit Load
-    #    The 'description' field contains the full sentence.
+    #    INDmoney stores the human-readable sentence in 'description' when a load
+    #    applies (e.g. "1% if redeemed in 0-1 Years").
+    #    For funds with no exit load it leaves description empty and puts "Nil"
+    #    (or similar) in the 'value' field — so we fall back to value if needed.
     #    Strip the redundant "Exit Load of " prefix if present.
     exit_load = None
     if "Exit Load" in info:
         desc = info["Exit Load"].get("description", "") or ""
         cleaned = re.sub(r"^Exit Load of\s*", "", desc, flags=re.IGNORECASE).strip()
+        if not cleaned:
+            # Fall back to the 'value' field (e.g. "Nil", "0 Nil")
+            val = info["Exit Load"].get("value", "") or ""
+            cleaned = val.strip()
         exit_load = cleaned or None
 
     # 5. Lock-in Period

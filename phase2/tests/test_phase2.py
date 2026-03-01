@@ -44,7 +44,6 @@ NON_NULLABLE_FIELDS = [
     "category",
     "expense_ratio",
     "exit_load",
-    "min_sip_amount",
     "riskometer",
     "benchmark",
     "source_url",
@@ -53,6 +52,7 @@ NON_NULLABLE_FIELDS = [
 
 # lock_in_period is nullable (null for all non-ELSS funds — that is correct)
 # axis_elss is the only fund where it must be non-null.
+# min_sip_amount is nullable for ETFs (hdfc_pvt_bank_etf trades on exchange, no SIP).
 
 
 # ── Test 1: Source files exist ────────────────────────────────────────────────
