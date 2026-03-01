@@ -1,8 +1,8 @@
 """
 Phase 1 Gate Tests — Foundation & Setup
 Verifies:
-  1. Required directory structure exists
-  2. Required config files exist
+  1. Required phase1/ directory structure exists
+  2. Project-level config files exist at repo root
   3. sources.json is valid and contains all 5 funds
   4. All 5 INDmoney URLs return reachable HTML via Playwright
 """
@@ -12,7 +12,8 @@ import pytest
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).parent.parent
+ROOT      = Path(__file__).parent.parent        # → phase1/
+REPO_ROOT = Path(__file__).parent.parent.parent # → RAGBased-MFChatbot/
 
 REQUIRED_DIRS = [
     "data/raw",
@@ -25,11 +26,16 @@ REQUIRED_DIRS = [
     ".github/workflows",
 ]
 
-REQUIRED_FILES = [
+# Phase1-specific file
+REQUIRED_PHASE1_FILES = [
+    "data/sources.json",
+]
+
+# Project-level files that live at repo root (shared across all phases)
+REQUIRED_ROOT_FILES = [
     "requirements.txt",
     ".env.example",
     ".gitignore",
-    "data/sources.json",
 ]
 
 REQUIRED_FUND_IDS = {
@@ -48,11 +54,16 @@ def test_required_directories_exist():
     assert not missing, f"Missing directories: {missing}"
 
 
-# ── Test 2: Config files ──────────────────────────────────────────────────────
+# ── Test 2: Phase1 files and project-level config files ──────────────────────
 
-def test_required_files_exist():
-    missing = [f for f in REQUIRED_FILES if not (ROOT / f).is_file()]
-    assert not missing, f"Missing files: {missing}"
+def test_required_phase1_files_exist():
+    missing = [f for f in REQUIRED_PHASE1_FILES if not (ROOT / f).is_file()]
+    assert not missing, f"Missing phase1 files: {missing}"
+
+
+def test_required_root_files_exist():
+    missing = [f for f in REQUIRED_ROOT_FILES if not (REPO_ROOT / f).is_file()]
+    assert not missing, f"Missing project-root files: {missing}"
 
 
 # ── Test 3: sources.json structure ───────────────────────────────────────────
