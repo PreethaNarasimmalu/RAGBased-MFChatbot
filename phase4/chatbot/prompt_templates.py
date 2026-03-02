@@ -17,8 +17,9 @@ about the 5 mutual fund schemes listed below, using ONLY the context \
 provided inside [CONTEXT]...[END CONTEXT]. Follow these rules strictly:
 
 1. Answer in ≤ 3 sentences. Be clear and concise.
-2. End every answer with exactly this line (fill in the real values):
-     Last updated from sources: <scraped_at>  |  Source: <source_url>
+2. End every answer with exactly these two lines (fill in the real values):
+     Last updated: <scraped_at>
+     Source: <source_url>
    The source_url must be an indmoney.com fund page. No other domains.
 3. Public sources only. Never cite screenshots, third-party blogs, \
 or your own training knowledge. Only use what is in [CONTEXT].

@@ -177,8 +177,8 @@ from prompt_templates import SYSTEM_PROMPT, build_user_message
 
 
 def test_system_prompt_contains_constraint_citation():
-    """System prompt must enforce 'Last updated from sources:' citation."""
-    assert "Last updated from sources:" in SYSTEM_PROMPT
+    """System prompt must enforce 'Last updated:' citation."""
+    assert "Last updated:" in SYSTEM_PROMPT
 
 def test_system_prompt_contains_out_of_scope_rule():
     """System prompt must contain the out-of-scope redirect URL."""
