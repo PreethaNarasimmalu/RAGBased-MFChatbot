@@ -142,18 +142,18 @@ def answer(query: str) -> str:
         )
 
     # ── Stage 7: Guarantee citation line ──────────────────────────────────────
-    # Constraint 4: every answer must end with "Last updated:" and "Source:"
+    # Format: "Last updated: YYYY-MM-DD  Source: <url>" on one line
     if "Last updated:" not in llm_answer:
         top = relevant[0]
         llm_answer += (
             f"\n\nLast updated: {top['scraped_at'][:10]}"
-            f"\nSource: {top['source_url']}"
+            f"  Source: {top['source_url']}"
         )
     else:
-        # Ensure "Source:" is always on its own line after "Last updated: ..."
+        # Collapse any newline/whitespace between "Last updated:..." and "Source:" onto one line
         llm_answer = re.sub(
-            r'(Last updated: \S+)[ \t]+Source:',
-            r'\1\nSource:',
+            r'(Last updated: \S+)\s+Source:',
+            r'\1  Source:',
             llm_answer,
         )
 
