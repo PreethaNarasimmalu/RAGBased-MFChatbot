@@ -148,14 +148,14 @@ def answer(query: str) -> str:
     if "Last updated:" not in llm_answer:
         top = relevant[0]
         llm_answer += (
-            f"\n\nLast updated: {top['scraped_at'][:10]}"
-            f"\nSource: {top['source_url']}"
+            f"\n\nLast updated: {top['scraped_at'][:10]}  \n"
+            f"Source: {top['source_url']}"
         )
     else:
-        # Ensure Source: is always on its own line
+        # "  \n" = Markdown line break so Source: renders on its own line
         llm_answer = re.sub(
-            r'(Last updated: \S+)[ \t]*Source:',
-            r'\1\nSource:',
+            r'(Last updated: \S+)[\s]*Source:',
+            r'\1  \nSource:',
             llm_answer,
         )
 
