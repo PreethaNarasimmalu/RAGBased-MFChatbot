@@ -19,6 +19,7 @@ Guarantees (from Operational Constraints):
   • No performance computations (blocked at safety gate + system prompt).
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -147,6 +148,13 @@ def answer(query: str) -> str:
         llm_answer += (
             f"\n\nLast updated: {top['scraped_at'][:10]}"
             f"\nSource: {top['source_url']}"
+        )
+    else:
+        # Ensure "Source:" is always on its own line after "Last updated: ..."
+        llm_answer = re.sub(
+            r'(Last updated: \S+)[ \t]+Source:',
+            r'\1\nSource:',
+            llm_answer,
         )
 
     return llm_answer
