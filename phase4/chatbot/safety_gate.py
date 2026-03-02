@@ -79,9 +79,8 @@ REFUSAL_MESSAGE_PII = (
 )
 
 REFUSAL_MESSAGE_ADVICE = (
-    "This assistant provides facts only and does not offer investment advice. "
-    "For personalised guidance, consult a SEBI-registered investment adviser: "
-    "https://www.sebi.gov.in/investors.html"
+    "This assistant provides facts only and does not offer investment advice.  \n"
+    "To explore mutual funds, visit https://www.indmoney.com/mutual-funds/all"
 )
 
 REFUSAL_MESSAGE_PERF = (
