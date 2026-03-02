@@ -141,19 +141,21 @@ def answer(query: str) -> str:
             f"LLM service error ({exc}). Please try again later."
         )
 
-    # ── Stage 7: Guarantee citation line ──────────────────────────────────────
-    # Format: "Last updated: YYYY-MM-DD  Source: <url>" on one line
+    # ── Stage 7: Guarantee citation lines ─────────────────────────────────────
+    # Format:
+    #   Last updated: YYYY-MM-DD
+    #   Source: <url>
     if "Last updated:" not in llm_answer:
         top = relevant[0]
         llm_answer += (
             f"\n\nLast updated: {top['scraped_at'][:10]}"
-            f"  Source: {top['source_url']}"
+            f"\nSource: {top['source_url']}"
         )
     else:
-        # Collapse any newline/whitespace between "Last updated:..." and "Source:" onto one line
+        # Ensure Source: is always on its own line
         llm_answer = re.sub(
-            r'(Last updated: \S+)\s+Source:',
-            r'\1  Source:',
+            r'(Last updated: \S+)[ \t]*Source:',
+            r'\1\nSource:',
             llm_answer,
         )
 
