@@ -79,7 +79,7 @@ def build_user_message(query: str, chunks: list[dict]) -> str:
     for i, chunk in enumerate(chunks, 1):
         lines.append(f"Fact {i}: {chunk['text']}")
         lines.append(f"Source: {chunk['source_url']}")
-        lines.append(f"Last updated: {chunk['scraped_at']}")
+        lines.append(f"Last updated: {chunk['scraped_at'][:10]}")
         if i < len(chunks):
             lines.append("")   # blank line between facts
     lines.append("[END CONTEXT]")
