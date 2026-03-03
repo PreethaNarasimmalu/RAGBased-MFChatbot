@@ -1,0 +1,84 @@
+# Phase 7 — Daily Mutual Fund Data Scraper
+#
+# Trigger: every day at 18:30 UTC (midnight IST = 00:00 IST = 18:30 UTC)
+# Also triggered manually via workflow_dispatch for on-demand scraping.
+#
+# What it does:
+#   1. Checkout the repository
+#   2. Set up Python 3.11
+#   3. Install all Python dependencies (requirements.txt)
+#   4. Install Playwright's Chromium browser (INDmoney is a React SPA)
+#   5. Run the scraper → writes phase2/data/raw/<fund_id>.json for all 5 funds
+#   6. Diff the data/raw/ directory — skip commit if nothing changed
+#   7. Commit and push updated JSON files back to the repo
+#
+# On next Streamlit startup the app reads fresh JSON and rebuilds ChromaDB.
+#
+# Failure behaviour:
+#   - If the scraper fails (INDmoney blocks, timeout, etc.) the workflow
+#     fails visibly in the Actions log.
+#   - The previous data/raw/*.json files are NOT modified; the app keeps
+#     serving the last-good data with correct `scraped_at` timestamps.
+
+name: Daily Mutual Fund Data Scrape
+
+on:
+  schedule:
+    - cron: '30 18 * * *'   # 18:30 UTC = 00:00 IST (midnight India Standard Time)
+  workflow_dispatch:         # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  scrape:
+    name: Scrape INDmoney fund pages and commit updates
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write        # Required to git push updated JSON back to repo
+
+    steps:
+      # ── Step 1: Checkout ────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 2: Python ──────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── Step 3: Dependencies ─────────────────────────────────────────────────
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # ── Step 4: Playwright browser ───────────────────────────────────────────
+      # --with-deps installs system packages (libnss3, libgbm, etc.) required
+      # on Ubuntu for Chromium to launch in headless mode.
+      - name: Install Playwright Chromium browser
+        run: playwright install chromium --with-deps
+
+      # ── Step 5: Scrape ───────────────────────────────────────────────────────
+      - name: Run scraper for all 5 fund pages
+        run: python phase2/scraping/scraper.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      # ── Step 6: Detect changes ───────────────────────────────────────────────
+      # `git diff --quiet` exits 0 (no output) if nothing changed.
+      # If files changed, we write "changed=true" to GITHUB_OUTPUT so the
+      # commit step can be made conditional.
+      - name: Check whether scraped data changed
+        id: git_diff
+        run: |
+          git diff --quiet phase2/data/raw/ || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # ── Step 7: Commit & push (only when data changed) ──────────────────────
+      - name: Commit and push updated fund data
+        if: steps.git_diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add phase2/data/raw/
+          git commit -m "chore: daily scrape $(date -u +'%Y-%m-%d')"
+          git push
