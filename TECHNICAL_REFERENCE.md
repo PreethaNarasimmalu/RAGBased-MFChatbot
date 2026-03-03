@@ -7,19 +7,56 @@
 
 ## Table of Contents
 
-1. [How the Architecture Was Designed](#1-how-the-architecture-was-designed)
-2. [System Overview](#2-system-overview)
-3. [External APIs](#3-external-apis)
-4. [Internal Module APIs](#4-internal-module-apis)
-5. [End-to-End Data Flow](#5-end-to-end-data-flow)
-6. [Data Storage Schemas](#6-data-storage-schemas)
-7. [Safety & Compliance Layer](#7-safety--compliance-layer)
-8. [Deployment Guide](#8-deployment-guide)
-9. [Future Improvements](#9-future-improvements)
+1. [Tech Stack at a Glance](#1-tech-stack-at-a-glance)
+2. [How the Architecture Was Designed](#2-how-the-architecture-was-designed)
+3. [System Overview](#3-system-overview)
+4. [External APIs](#4-external-apis)
+5. [Internal Module APIs](#5-internal-module-apis)
+6. [End-to-End Data Flow](#6-end-to-end-data-flow)
+7. [Data Storage Schemas](#7-data-storage-schemas)
+8. [Safety & Compliance Layer](#8-safety--compliance-layer)
+9. [Deployment Guide](#9-deployment-guide)
+10. [Future Improvements](#10-future-improvements)
 
 ---
 
-## 1. How the Architecture Was Designed
+## 1. Tech Stack at a Glance
+
+| Layer | Library / Service | Version pin | Why this choice |
+|---|---|---|---|
+| **Language** | Python | 3.11+ | Type hints, `match` syntax, latest stdlib |
+| **UI framework** | Streamlit | `>=1.32` | Zero-boilerplate chat UI; deploys to Streamlit Cloud for free |
+| **Web scraping** | Playwright (Chromium) | `>=1.42` | Only tool that executes JS on React SPAs; native async, GitHub Actions support |
+| **HTML parsing** | BeautifulSoup4 | `>=4.12` | Concise CSS-selector API; works on already-rendered HTML from Playwright |
+| **Embedding model** | sentence-transformers `all-MiniLM-L6-v2` | `>=2.7` | 384-dim, runs on CPU, no API call, no cost, sufficient for 35 chunks |
+| **Vector database** | ChromaDB | `>=0.4` | Embedded (no server), persists to disk, cosine metric, free |
+| **LLM inference** | Groq API — `llama-3.3-70b-versatile` | N/A | Free tier, LPU hardware (fast), OpenAI-compatible SDK |
+| **LLM SDK** | `groq` Python package | `>=0.9` | Official Groq client; thin wrapper over `httpx` |
+| **Config management** | python-dotenv | `>=1.0` | Loads `GROQ_API_KEY` from `.env`; silently skipped if absent |
+| **Testing** | pytest | `>=8.0` | Industry standard; parametrised tests for eval suite |
+| **Scheduler** | GitHub Actions cron | N/A | Runs independently of sleeping Streamlit Cloud app |
+| **Data format** | JSON (stdlib) | built-in | Human-readable, easy to diff, no schema migration needed |
+
+### Dependency interaction diagram
+
+```
+Playwright ──scrapes──► BeautifulSoup ──parses──► JSON files
+                                                       │
+                                              sentence-transformers
+                                                       │ embeds
+                                                       ▼
+                                                  ChromaDB
+                                                       │ retrieves
+                                                       ▼
+User query ──► safety_gate ──► preprocessor ──► pipeline ──► Groq LLM ──► Answer
+                                                   ▲
+                                          sentence-transformers
+                                          (query embedding)
+```
+
+---
+
+## 2. How the Architecture Was Designed
 
 ### The Problem
 
@@ -72,7 +109,7 @@ Streamlit Cloud **sleeps inactive apps**. Any in-process scheduler (APScheduler,
 
 ---
 
-## 2. System Overview
+## 3. System Overview
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -121,7 +158,7 @@ Streamlit Cloud **sleeps inactive apps**. Any in-process scheduler (APScheduler,
 
 ---
 
-## 3. External APIs
+## 4. External APIs
 
 ### 3.1 Groq API (LLM Inference)
 
@@ -198,7 +235,7 @@ Streamlit Cloud **sleeps inactive apps**. Any in-process scheduler (APScheduler,
 
 ---
 
-## 4. Internal Module APIs
+## 5. Internal Module APIs
 
 ### 4.1 `phase4/chatbot/safety_gate.py`
 
@@ -461,7 +498,7 @@ def query_chunks(
 
 ---
 
-## 5. End-to-End Data Flow
+## 6. End-to-End Data Flow
 
 ### 5.1 Scrape → Store (offline / scheduled)
 
@@ -552,7 +589,7 @@ User types query
 
 ---
 
-## 6. Data Storage Schemas
+## 7. Data Storage Schemas
 
 ### 6.1 `phase2/data/sources.json` — Fund Registry
 
@@ -658,7 +695,7 @@ Used by the scraper to know which URLs to visit.
 
 ---
 
-## 7. Safety & Compliance Layer
+## 8. Safety & Compliance Layer
 
 ### Three-Stage Gate (runs on every query, zero external calls)
 
@@ -696,7 +733,7 @@ The system prompt explicitly instructs the LLM to refuse if advice or PII appear
 
 ---
 
-## 8. Deployment Guide
+## 9. Deployment Guide
 
 ### Local Development
 
@@ -761,7 +798,7 @@ streamlit run phase5/ui/app.py
 
 ---
 
-## 9. Future Improvements
+## 10. Future Improvements
 
 ### Data & Coverage
 

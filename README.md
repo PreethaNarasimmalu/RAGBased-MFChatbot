@@ -30,6 +30,24 @@ A facts-only chatbot that answers questions about 5 specific mutual fund schemes
 
 ---
 
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Language** | Python 3.11+ | Runtime |
+| **UI** | [Streamlit](https://streamlit.io) | Chat interface (browser) |
+| **Web scraping** | [Playwright](https://playwright.dev/python/) + Chromium | Headless JS execution on React SPA |
+| **HTML parsing** | [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) | Extract fund fields from rendered HTML |
+| **Embedding model** | [sentence-transformers](https://www.sbert.net) `all-MiniLM-L6-v2` | Local 384-dim embeddings (no API call) |
+| **Vector database** | [ChromaDB](https://www.trychroma.com) | Persistent cosine-similarity vector store |
+| **LLM** | [Groq API](https://console.groq.com) — `llama-3.3-70b-versatile` | Answer generation (free tier, LPU-fast) |
+| **Config** | [python-dotenv](https://pypi.org/project/python-dotenv/) | Load `GROQ_API_KEY` from `.env` |
+| **Testing** | [pytest](https://pytest.org) | Unit + integration tests across all phases |
+| **Scheduler** | GitHub Actions cron | Daily scrape + auto-commit at midnight IST |
+| **Data format** | JSON | Raw fund data (`phase2/data/raw/`) |
+
+---
+
 ## Quick Start
 
 ### Prerequisites
