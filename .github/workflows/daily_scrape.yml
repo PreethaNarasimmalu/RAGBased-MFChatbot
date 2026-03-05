@@ -30,7 +30,7 @@ on:
 jobs:
   scrape:
     name: Scrape INDmoney fund pages and commit updates
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     permissions:
       contents: write        # Required to git push updated JSON back to repo
@@ -53,10 +53,25 @@ jobs:
         run: pip install -r requirements.txt
 
       # ── Step 4: Playwright browser ───────────────────────────────────────────
-      # --with-deps installs system packages (libnss3, libgbm, etc.) required
-      # on Ubuntu for Chromium to launch in headless mode.
+      # We install system deps manually to handle the Ubuntu 24.04 package renames
+      # (libasound2 → libasound2t64, libatk → libatk1.0-0t64, etc.) that break
+      # `playwright install --with-deps` on the current ubuntu-latest runner.
+      - name: Install Chromium system dependencies
+        run: |
+          sudo apt-get update -q
+          # Packages with stable names across Ubuntu 22 and 24
+          sudo apt-get install -y \
+            libnss3 libnspr4 libdbus-1-3 libdrm2 libgbm1 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 \
+            libpango-1.0-0 libcairo2 libx11-6 libxcb1 libxext6 libxrender1
+          # Packages renamed in Ubuntu 24.04 — try new names first, fall back to old
+          sudo apt-get install -y libasound2t64 libatk1.0-0t64 libatk-bridge2.0-0t64 \
+            libcups2t64 libxfixes3t64 2>/dev/null || \
+          sudo apt-get install -y libasound2 libatk1.0-0 libatk-bridge2.0-0 \
+            libcups2 libxfixes3
+
       - name: Install Playwright Chromium browser
-        run: playwright install chromium --with-deps
+        run: playwright install chromium
 
       # ── Step 5: Scrape ───────────────────────────────────────────────────────
       - name: Run scraper for all 5 fund pages
