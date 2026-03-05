@@ -47,11 +47,12 @@ def _chromium_launch_kwargs() -> dict:
     Uses --no-sandbox on Linux/CI (required on Ubuntu GitHub Actions runners).
     Lets Playwright resolve the Chromium binary from its own cache.
     """
-    kwargs: dict = {"headless": True}
+    args = [
+        "--disable-blink-features=AutomationControlled",
+    ]
     if sys.platform != "win32":
-        # --no-sandbox is required on Ubuntu CI environments (no user namespace support)
-        kwargs["args"] = ["--no-sandbox", "--disable-setuid-sandbox"]
-    return kwargs
+        args += ["--no-sandbox", "--disable-setuid-sandbox"]
+    return {"headless": True, "args": args}
 
 
 # ── Main scrape function ──────────────────────────────────────────────────────
@@ -82,6 +83,9 @@ def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/124.0.0.0 Safari/537.36"
             )
+        )
+        context.add_init_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
         page = context.new_page()
 
