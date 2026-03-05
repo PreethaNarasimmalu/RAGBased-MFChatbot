@@ -20,7 +20,6 @@ Design notes:
 """
 
 import json
-import os
 import sys
 import time
 from pathlib import Path
@@ -45,19 +44,13 @@ def _load_sources() -> list[dict]:
 def _chromium_launch_kwargs() -> dict:
     """
     Return kwargs for p.chromium.launch().
-    On Linux/CI, tries to find the cached Chromium binary.
-    On Windows, lets Playwright use its default path.
+    Uses --no-sandbox on Linux/CI (required on Ubuntu GitHub Actions runners).
+    Lets Playwright resolve the Chromium binary from its own cache.
     """
     kwargs: dict = {"headless": True}
     if sys.platform != "win32":
-        candidates = [
-            os.path.expanduser("~/.cache/ms-playwright/chromium-1194/chrome-linux/chrome"),
-            "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome",
-        ]
-        for c in candidates:
-            if os.path.isfile(c):
-                kwargs["executable_path"] = c
-                break
+        # --no-sandbox is required on Ubuntu CI environments (no user namespace support)
+        kwargs["args"] = ["--no-sandbox", "--disable-setuid-sandbox"]
     return kwargs
 
 
@@ -151,4 +144,6 @@ def _print_summary(fund_data: dict) -> None:
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    scrape_all_funds()
+    results = scrape_all_funds()
+    if not results:
+        sys.exit(1)

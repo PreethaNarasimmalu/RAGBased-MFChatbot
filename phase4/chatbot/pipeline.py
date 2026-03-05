@@ -33,8 +33,8 @@ sys.path.insert(0, str(_PHASE4_CHATBOT))
 
 # ── Imports ────────────────────────────────────────────────────────────────────
 # safety_gate / preprocessor / prompt_templates use only stdlib — always safe
-from safety_gate import check, PASS, get_refusal_message
-from query_preprocessor import preprocess, OUT_OF_SCOPE_MESSAGE
+from safety_gate import check, PASS, REFUSE_PERF, get_refusal_message
+from query_preprocessor import preprocess, OUT_OF_SCOPE_MESSAGE, FUND_URLS, detect_fund
 from prompt_templates import SYSTEM_PROMPT, build_user_message
 import llm_client
 
@@ -69,6 +69,20 @@ def answer(query: str) -> str:
     # ── Stage 1: Safety gate ───────────────────────────────────────────────────
     gate = check(query)
     if gate != PASS:
+        if gate == REFUSE_PERF:
+            fund_id = detect_fund(query)
+            if fund_id and fund_id in FUND_URLS:
+                from query_preprocessor import FUND_CANONICAL_NAMES
+                fund_name = FUND_CANONICAL_NAMES[fund_id]
+                return (
+                    "I don't provide performance data or return comparisons. "
+                    f"To explore more on {fund_name}: {FUND_URLS[fund_id]}"
+                )
+            return (
+                "I don't provide performance data or return comparisons. "
+                "To explore more on mutual funds: "
+                "https://www.indmoney.com/mutual-funds/all"
+            )
         return get_refusal_message(gate)
 
     # ── Stage 2: Preprocess + detect fund ─────────────────────────────────────

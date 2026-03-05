@@ -73,9 +73,9 @@ REFUSE_PERF   = "REFUSE_PERF"
 # ── Refusal messages (Constraint 4: clarity & transparency, ≤ 3 sentences) ────
 
 REFUSAL_MESSAGE_PII = (
-    "I cannot process queries containing personal information "
-    "(PAN, Aadhaar, account number, OTP, email, or phone number). "
-    "Please remove any personal details and try again."
+    "Please avoid sharing personal information like PAN, Aadhaar, "
+    "account numbers, OTP, email address, or mobile numbers in your queries. "
+    "Feel free to ask your question without those details!"
 )
 
 REFUSAL_MESSAGE_ADVICE = (

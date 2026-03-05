@@ -69,6 +69,31 @@ FUND_CANONICAL_NAMES: dict[str, str] = {
     "hdfc_pvt_bank_etf":  "HDFC Nifty Private Bank ETF",
 }
 
+FUND_URLS: dict[str, str] = {
+    "hdfc_small_cap":     "https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580",
+    "axis_elss":          "https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631",
+    "axis_large_mid_cap": "https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028",
+    "axis_nifty_100":     "https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056",
+    "hdfc_pvt_bank_etf":  "https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349",
+}
+
+# ── Whitelist patterns ─────────────────────────────────────────────────────────
+# Queries that look like MF questions but should always reach the LLM
+# (e.g. asking which funds the bot covers — no alias needed, no redirect).
+_WHITELIST_PATTERNS = [
+    "which funds",
+    "what funds",
+    "5 funds",
+    "five funds",
+    "funds do you cover",
+    "funds you cover",
+    "funds you have",
+    "funds you know",
+    "list of funds",
+    "funds covered",
+    "what are the funds",
+]
+
 # ── Out-of-scope detection ─────────────────────────────────────────────────────
 # Keywords that signal the query is about a mutual fund (broad)
 _MF_KEYWORDS = [
@@ -98,13 +123,8 @@ _MF_KEYWORDS = [
 OUT_OF_SCOPE_LINK = "https://www.indmoney.com/mutual-funds/all"
 
 OUT_OF_SCOPE_MESSAGE = (
-    "I can only answer questions about these 5 mutual funds:\n"
-    "  1. HDFC Small Cap Fund — Direct Growth\n"
-    "  2. Axis ELSS Tax Saver Fund — Direct Plan Growth\n"
-    "  3. Axis Large & Mid Cap Fund — Direct Growth\n"
-    "  4. Axis Nifty 100 Index Fund — Direct Growth\n"
-    "  5. HDFC Nifty Private Bank ETF\n\n"
-    "For information about other mutual funds, please visit: "
+    "I don't have details on that fund — I currently cover only 5 specific mutual funds. "
+    "You can explore all available mutual funds on INDmoney here: "
     f"{OUT_OF_SCOPE_LINK}"
 )
 
@@ -145,7 +165,12 @@ def preprocess(query: str) -> tuple[str, str | None, bool]:
     cleaned = query.strip()
     fund_id = detect_fund(cleaned)
 
+    # Whitelisted queries (e.g. "what funds do you cover?") should never be
+    # flagged as out-of-scope even though they match MF keywords.
+    lower = cleaned.lower()
+    is_whitelisted = any(p in lower for p in _WHITELIST_PATTERNS)
+
     # Out-of-scope: MF-related query but no matching fund alias
-    out_of_scope = (fund_id is None) and is_mf_query(cleaned)
+    out_of_scope = (fund_id is None) and is_mf_query(cleaned) and not is_whitelisted
 
     return cleaned, fund_id, out_of_scope
