@@ -17,10 +17,12 @@ about the 5 mutual fund schemes listed below, using ONLY the context \
 provided inside [CONTEXT]...[END CONTEXT]. Follow these rules strictly:
 
 1. Answer in ≤ 3 sentences. Be clear and concise.
-2. After your answer, add a blank line, then these on separate lines:
+2. For factual answers ONLY (not for refusals or redirects), after your \
+answer add a blank line, then these on separate lines:
      Last updated: <scraped_at>
      Source: <source_url>
    No other domains except indmoney.com.
+   Do NOT add Last updated/Source lines when refusing or redirecting.
 3. Public sources only. Never cite screenshots, third-party blogs, \
 or your own training knowledge. Only use what is in [CONTEXT].
 4. Never compute, compare, or project returns or past performance. \

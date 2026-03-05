@@ -142,21 +142,30 @@ def answer(query: str) -> str:
         )
 
     # ── Stage 7: Guarantee citation lines ─────────────────────────────────────
-    # Format:
-    #   Last updated: YYYY-MM-DD
-    #   Source: <url>
-    if "Last updated:" not in llm_answer:
-        top = relevant[0]
-        llm_answer += (
-            f"\n\nLast updated: {top['scraped_at'][:10]}  \n"
-            f"Source: {top['source_url']}"
-        )
-    else:
-        # "  \n" = Markdown line break so Source: renders on its own line
-        llm_answer = re.sub(
-            r'(Last updated: \S+)[\s]*Source:',
-            r'\1  \nSource:',
-            llm_answer,
-        )
+    # Only append citation for factual answers, not for refusals/redirects.
+    _REFUSAL_MARKERS = (
+        "does not offer investment advice",
+        "does not provide performance data",
+        "cannot process queries containing personal information",
+        "i only have information about the 5 funds",
+        "i could not find",
+        "please visit",
+    )
+    is_refusal = any(m in llm_answer.lower() for m in _REFUSAL_MARKERS)
+
+    if not is_refusal:
+        if "Last updated:" not in llm_answer:
+            top = relevant[0]
+            llm_answer += (
+                f"\n\nLast updated: {top['scraped_at'][:10]}  \n"
+                f"Source: {top['source_url']}"
+            )
+        else:
+            # "  \n" = Markdown line break so Source: renders on its own line
+            llm_answer = re.sub(
+                r'(Last updated: \S+)[\s]*Source:',
+                r'\1  \nSource:',
+                llm_answer,
+            )
 
     return llm_answer
