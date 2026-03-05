@@ -160,7 +160,7 @@ def answer(query: str) -> str:
     _REFUSAL_MARKERS = (
         "does not offer investment advice",
         "does not provide performance data",
-        "cannot process queries containing personal information",
+        "not able to process information like phone numbers",
         "i only have information about the 5 funds",
         "i could not find",
         "please visit",
