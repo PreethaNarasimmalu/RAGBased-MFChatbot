@@ -201,4 +201,18 @@ The workflow `.github/workflows/daily_scrape.yml` runs every day at midnight IST
 
 ## Disclaimer
 
-This tool provides **factual information only**, scraped from publicly available INDmoney fund pages. It does **not** provide investment advice, recommendations, or return projections. Mutual fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. For personalised advice, consult a SEBI-registered investment adviser.
+⚠️ **DISCLAIMER:** This tool provides factual information from publicly available INDmoney mutual fund pages. It does not provide investment advice, recommendations, or return projections. Mutual fund investments are subject to market risks. Please read all scheme-related documents carefully before investing.
+
+### Funds Covered
+
+This chatbot has information **only** about the following 5 mutual fund schemes:
+
+| # | Fund Name | AMC | Category |
+|---|---|---|---|
+| 1 | HDFC Small Cap Fund — Direct Growth | HDFC | Small Cap |
+| 2 | Axis ELSS Tax Saver Fund — Direct Plan Growth | Axis | ELSS / Tax Saver |
+| 3 | Axis Large & Mid Cap Fund — Direct Growth | Axis | Large & Mid Cap |
+| 4 | Axis Nifty 100 Index Fund — Direct Growth | Axis | Index (Large Cap) |
+| 5 | HDFC Nifty Private Bank ETF | HDFC | ETF (Sectoral) |
+
+Questions about any other fund will be redirected to [INDmoney's full fund listing](https://www.indmoney.com/mutual-funds/all).
