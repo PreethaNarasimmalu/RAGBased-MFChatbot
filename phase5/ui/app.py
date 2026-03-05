@@ -181,11 +181,9 @@ if prompt := st.chat_input("Ask about expense ratio, exit load, SIP, lock-in, ri
 # ── Persistent disclaimer footer ───────────────────────────────────────────────
 st.markdown("""
 <div class="mf-disclaimer">
-⚠️ <strong>DISCLAIMER:</strong> This tool provides factual information scraped from publicly
-available INDmoney fund pages. It does <strong>not</strong> provide investment advice,
+⚠️ <strong>DISCLAIMER:</strong> This chat assistant provides factual information from publicly
+available INDmoney mutual fund pages. It does <strong>not</strong> provide investment advice,
 recommendations, or return projections. Mutual fund investments are subject to market risks.
 Please read all scheme-related documents carefully before investing.
-For personalised advice, consult a
-<a href="https://www.sebi.gov.in/investors.html" target="_blank">SEBI-registered investment adviser</a>.
 </div>
 """, unsafe_allow_html=True)
