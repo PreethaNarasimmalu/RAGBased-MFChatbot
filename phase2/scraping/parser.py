@@ -56,25 +56,47 @@ def _info_map(mf_data: dict) -> dict:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def parse_fund_html(html: str, fund_meta: dict) -> dict:
+def parse_fund_json(page_props: dict, fund_meta: dict) -> dict:
     """
-    Parse rendered INDmoney fund page HTML and return a structured dict.
+    Parse a /_next/data/ JSON payload captured via Playwright network interception.
+
+    The payload structure mirrors __NEXT_DATA__ but is rooted at pageProps:
+        pageProps → mutualFundsDetailData → data
 
     Args:
-        html:       Full HTML string from Playwright page.content()
+        page_props: The full JSON dict from the /_next/data/ response.
         fund_meta:  Dict from sources.json (fund_id, fund_name, amc, category, url)
 
     Returns:
-        Dict with keys:
-            fund_id, fund_name, amc, category,
-            expense_ratio, exit_load, min_sip_amount, lock_in_period,
-            riskometer, benchmark,
-            source_url, scraped_at
-        Missing optional fields (e.g. lock_in for non-ELSS) are stored as null.
+        Same structured dict as parse_fund_html().
+    """
+    # _next/data responses are wrapped in {"pageProps": {...}}
+    try:
+        mf_data = page_props["pageProps"]["mutualFundsDetailData"]["data"]
+    except (KeyError, TypeError) as exc:
+        raise ValueError(
+            f"Unexpected _next/data structure — could not reach "
+            f"pageProps.mutualFundsDetailData.data: {exc}"
+        )
+    return _build_fund_dict(mf_data, fund_meta)
+
+
+def parse_fund_html(html: str, fund_meta: dict) -> dict:
+    """
+    Parse rendered INDmoney fund page HTML and return a structured dict.
+    Fallback path used when /_next/data/ interception yields nothing.
     """
     next_data = _extract_next_data(html)
     mf_data   = _get_mf_data(next_data)
-    info      = _info_map(mf_data)
+    return _build_fund_dict(mf_data, fund_meta)
+
+
+def _build_fund_dict(mf_data: dict, fund_meta: dict) -> dict:
+    """
+    Extract all structured fields from the mutualFundsDetailData.data node
+    and return the final fund dict. Shared by both parse paths.
+    """
+    info = _info_map(mf_data)
 
     # 1. Expense Ratio  (e.g. "0.67%")
     expense_ratio = None
@@ -108,7 +130,6 @@ def parse_fund_html(html: str, fund_meta: dict) -> dict:
         desc = info["Exit Load"].get("description", "") or ""
         cleaned = re.sub(r"^Exit Load of\s*", "", desc, flags=re.IGNORECASE).strip()
         if not cleaned:
-            # Fall back to the 'value' field (e.g. "Nil", "0 Nil")
             val = info["Exit Load"].get("value", "") or ""
             cleaned = val.strip()
         exit_load = cleaned or None

@@ -2,8 +2,8 @@
 Phase 2 — Web Scraper
 
 Playwright-based headless browser scraper for 5 INDmoney mutual fund pages.
-For each fund, navigates the URL, waits for full JS render, extracts HTML,
-then delegates to parser.py to produce a structured JSON file.
+For each fund, navigates the URL and intercepts the /_next/data/ JSON response
+that Next.js fetches for page props, then delegates to parser.py.
 
 Usage (run from repo root or phase2/):
     python phase2/scraping/scraper.py
@@ -12,9 +12,13 @@ Output:
     phase2/data/raw/<fund_id>.json  — one file per fund
 
 Design notes:
-  • INDmoney is a React SPA — requests alone cannot get rendered content.
-  • Playwright renders the full page (including JS), then we read page.content().
-  • wait_until="networkidle" ensures dynamic data sections are populated.
+  • INDmoney is a Next.js SPA. On navigation it fetches page props via
+    /_next/data/{buildId}/<slug>.json — a plain JSON endpoint.
+  • We register a Playwright response listener BEFORE page.goto() to capture
+    that JSON directly. This is faster than waiting for networkidle and avoids
+    HTML parsing entirely.
+  • Fallback: if the _next/data response is not seen within the timeout, we
+    fall back to reading __NEXT_DATA__ from page.content() (the SSR embed).
   • Polite crawl: 3-second delay between pages, realistic User-Agent header.
   • Scraper is fully re-runnable; scraped_at timestamp refreshes each run.
 """
@@ -31,7 +35,7 @@ RAW_DIR      = PHASE2_DIR / "data" / "raw"
 
 # Make sure parser.py is importable when script is run directly
 sys.path.insert(0, str(Path(__file__).parent))
-from parser import parse_fund_html  # noqa: E402
+from parser import parse_fund_json, parse_fund_html  # noqa: E402
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -45,7 +49,6 @@ def _chromium_launch_kwargs() -> dict:
     """
     Return kwargs for p.chromium.launch().
     Uses --no-sandbox on Linux/CI (required on Ubuntu GitHub Actions runners).
-    Lets Playwright resolve the Chromium binary from its own cache.
     """
     args = [
         "--disable-blink-features=AutomationControlled",
@@ -60,6 +63,13 @@ def _chromium_launch_kwargs() -> dict:
 def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
     """
     Scrape all 5 INDmoney fund pages and write JSON output files.
+
+    Strategy:
+      1. Before navigating, attach a response listener that watches for
+         /_next/data/ API responses (the Next.js page-props JSON endpoint).
+      2. Navigate with wait_until="domcontentloaded" (faster, no networkidle hang).
+      3. If the listener captured a _next/data payload, parse it directly (JSON).
+      4. Otherwise fall back to page.content() + __NEXT_DATA__ HTML parsing.
 
     Args:
         delay_seconds: Polite delay between consecutive page loads.
@@ -82,7 +92,10 @@ def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/124.0.0.0 Safari/537.36"
-            )
+            ),
+            viewport={"width": 1280, "height": 800},
+            locale="en-IN",
+            timezone_id="Asia/Kolkata",
         )
         context.add_init_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
@@ -95,16 +108,36 @@ def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
             print(f"\n[{i + 1}/{len(funds)}] Scraping {fund_id} ...")
             print(f"    URL: {url}")
 
+            # Collect any /_next/data/ response payload for this navigation
+            captured: dict = {}
+
+            def _on_response(response, _captured=captured):
+                if "/_next/data/" in response.url and response.status == 200:
+                    try:
+                        _captured["data"] = response.json()
+                        _captured["url"]  = response.url
+                    except Exception:
+                        pass
+
+            page.on("response", _on_response)
+
             try:
-                response = page.goto(url, timeout=60_000, wait_until="networkidle")
-                status   = response.status if response else None
+                nav_response = page.goto(url, timeout=60_000, wait_until="domcontentloaded")
+                status = nav_response.status if nav_response else None
 
                 if status is None or status >= 400:
                     print(f"    ERROR: HTTP {status} — skipping")
                     continue
 
-                html      = page.content()
-                fund_data = parse_fund_html(html, fund)
+                if captured.get("data"):
+                    print(f"    Source: _next/data intercepted ({captured['url'].split('/')[-1]})")
+                    fund_data = parse_fund_json(captured["data"], fund)
+                else:
+                    # Fallback: wait a bit more for the SSR __NEXT_DATA__ embed
+                    print("    _next/data not seen — falling back to __NEXT_DATA__ HTML parse")
+                    page.wait_for_load_state("networkidle", timeout=30_000)
+                    html      = page.content()
+                    fund_data = parse_fund_html(html, fund)
 
                 out_path = RAW_DIR / f"{fund_id}.json"
                 with open(out_path, "w", encoding="utf-8") as f:
@@ -116,6 +149,9 @@ def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
 
             except Exception as exc:
                 print(f"    ERROR: {exc}")
+
+            finally:
+                page.remove_listener("response", _on_response)
 
             # Polite delay — skip after the last fund
             if i < len(funds) - 1:
