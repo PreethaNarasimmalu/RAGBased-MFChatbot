@@ -1,0 +1,31 @@
+fund_id,fund_name,amc,category,field,source_url
+hdfc_small_cap,HDFC Small Cap Fund — Direct Growth,HDFC,Small Cap,expense_ratio,https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580
+hdfc_small_cap,HDFC Small Cap Fund — Direct Growth,HDFC,Small Cap,exit_load,https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580
+hdfc_small_cap,HDFC Small Cap Fund — Direct Growth,HDFC,Small Cap,min_sip_amount,https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580
+hdfc_small_cap,HDFC Small Cap Fund — Direct Growth,HDFC,Small Cap,lock_in_period,https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580
+hdfc_small_cap,HDFC Small Cap Fund — Direct Growth,HDFC,Small Cap,riskometer,https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580
+hdfc_small_cap,HDFC Small Cap Fund — Direct Growth,HDFC,Small Cap,benchmark,https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580
+axis_elss,Axis ELSS Tax Saver Fund — Direct Plan Growth,Axis,ELSS / Tax Saver,expense_ratio,https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631
+axis_elss,Axis ELSS Tax Saver Fund — Direct Plan Growth,Axis,ELSS / Tax Saver,exit_load,https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631
+axis_elss,Axis ELSS Tax Saver Fund — Direct Plan Growth,Axis,ELSS / Tax Saver,min_sip_amount,https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631
+axis_elss,Axis ELSS Tax Saver Fund — Direct Plan Growth,Axis,ELSS / Tax Saver,lock_in_period,https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631
+axis_elss,Axis ELSS Tax Saver Fund — Direct Plan Growth,Axis,ELSS / Tax Saver,riskometer,https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631
+axis_elss,Axis ELSS Tax Saver Fund — Direct Plan Growth,Axis,ELSS / Tax Saver,benchmark,https://www.indmoney.com/mutual-funds/axis-elss-tax-saver-fund-direct-plan-growth-option-2631
+axis_large_mid_cap,Axis Large & Mid Cap Fund — Direct Growth,Axis,Large & Mid Cap,expense_ratio,https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028
+axis_large_mid_cap,Axis Large & Mid Cap Fund — Direct Growth,Axis,Large & Mid Cap,exit_load,https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028
+axis_large_mid_cap,Axis Large & Mid Cap Fund — Direct Growth,Axis,Large & Mid Cap,min_sip_amount,https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028
+axis_large_mid_cap,Axis Large & Mid Cap Fund — Direct Growth,Axis,Large & Mid Cap,lock_in_period,https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028
+axis_large_mid_cap,Axis Large & Mid Cap Fund — Direct Growth,Axis,Large & Mid Cap,riskometer,https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028
+axis_large_mid_cap,Axis Large & Mid Cap Fund — Direct Growth,Axis,Large & Mid Cap,benchmark,https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028
+axis_nifty_100,Axis Nifty 100 Index Fund — Direct Growth,Axis,Index (Large Cap),expense_ratio,https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056
+axis_nifty_100,Axis Nifty 100 Index Fund — Direct Growth,Axis,Index (Large Cap),exit_load,https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056
+axis_nifty_100,Axis Nifty 100 Index Fund — Direct Growth,Axis,Index (Large Cap),min_sip_amount,https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056
+axis_nifty_100,Axis Nifty 100 Index Fund — Direct Growth,Axis,Index (Large Cap),lock_in_period,https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056
+axis_nifty_100,Axis Nifty 100 Index Fund — Direct Growth,Axis,Index (Large Cap),riskometer,https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056
+axis_nifty_100,Axis Nifty 100 Index Fund — Direct Growth,Axis,Index (Large Cap),benchmark,https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056
+hdfc_pvt_bank_etf,HDFC Nifty Private Bank ETF,HDFC,ETF (Sectoral),expense_ratio,https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349
+hdfc_pvt_bank_etf,HDFC Nifty Private Bank ETF,HDFC,ETF (Sectoral),exit_load,https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349
+hdfc_pvt_bank_etf,HDFC Nifty Private Bank ETF,HDFC,ETF (Sectoral),min_sip_amount,https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349
+hdfc_pvt_bank_etf,HDFC Nifty Private Bank ETF,HDFC,ETF (Sectoral),lock_in_period,https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349
+hdfc_pvt_bank_etf,HDFC Nifty Private Bank ETF,HDFC,ETF (Sectoral),riskometer,https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349
+hdfc_pvt_bank_etf,HDFC Nifty Private Bank ETF,HDFC,ETF (Sectoral),benchmark,https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349
