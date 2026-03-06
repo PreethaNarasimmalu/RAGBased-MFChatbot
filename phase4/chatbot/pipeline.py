@@ -145,9 +145,8 @@ def answer(query: str, chat_history: list[dict] | None = None) -> str:
     if not relevant:
         # No relevant result → redirect to all-funds page
         return (
-            "I could not find relevant information for your question in my database. "
-            "For information about mutual funds, please visit: "
-            "https://www.indmoney.com/mutual-funds/all"
+            "I currently don't have information on this fund.  \n"
+            "To explore mutual funds, visit https://www.indmoney.com/mutual-funds/all"
         )
 
     # ── Stage 5: Build context message ────────────────────────────────────────
@@ -171,6 +170,8 @@ def answer(query: str, chat_history: list[dict] | None = None) -> str:
         "does not provide performance data",
         "not able to process information like",
         "i only have information about the 5 funds",
+        "i currently don't have information on this fund",
+        "does not offer investment advice. feel free to ask",
         "i could not find",
         "please visit",
     )

@@ -6,12 +6,13 @@ Three-stage input filter (runs before any LLM or vector DB call):
   Stage 1 — Regex blocklist: PII patterns (instant, zero cost)
              PAN · Aadhaar · account numbers · OTPs · phone · email
   Stage 2 — Keyword check:  advice triggers
+  Stage 2b— Keyword check:  comparison / out-of-scope fund triggers
   Stage 3 — Keyword check:  performance / return claim triggers
 
 Operational constraint: No PII is ever stored. If Stage 1 fires,
 the query is dropped immediately and nothing is logged.
 
-Returns one of: PASS | REFUSE_PII | REFUSE_ADVICE | REFUSE_PERF
+Returns one of: PASS | REFUSE_PII | REFUSE_ADVICE | REFUSE_COMPARE | REFUSE_PERF
 """
 
 import re
@@ -65,6 +66,17 @@ _ADVICE_KEYWORDS = [
     "best fund",
 ]
 
+# ── Stage 2b: Comparison / Out-of-scope Fund Keywords ─────────────────────────
+
+_COMPARE_KEYWORDS = [
+    "compare with",
+    "compare this fund",
+    "any other fund",
+    "another fund",
+    "other fund",
+    "versus another",
+]
+
 # ── Stage 3: Performance / Return Keywords ─────────────────────────────────────
 
 _PERFORMANCE_KEYWORDS = [
@@ -83,10 +95,11 @@ _PERFORMANCE_KEYWORDS = [
 
 # ── Result constants ───────────────────────────────────────────────────────────
 
-PASS          = "PASS"
-REFUSE_PII    = "REFUSE_PII"
-REFUSE_ADVICE = "REFUSE_ADVICE"
-REFUSE_PERF   = "REFUSE_PERF"
+PASS           = "PASS"
+REFUSE_PII     = "REFUSE_PII"
+REFUSE_ADVICE  = "REFUSE_ADVICE"
+REFUSE_COMPARE = "REFUSE_COMPARE"
+REFUSE_PERF    = "REFUSE_PERF"
 
 # ── Refusal messages (Constraint 4: clarity & transparency, ≤ 3 sentences) ────
 
@@ -101,6 +114,12 @@ REFUSAL_MESSAGE_ADVICE = (
     "To explore mutual funds, visit https://www.indmoney.com/mutual-funds/all"
 )
 
+REFUSAL_MESSAGE_COMPARE = (
+    "This assistant provides facts only and does not offer investment advice. "
+    "Feel free to ask about a specific fund's NAV, expense ratio, lock-in period, or fund category.  \n"
+    "To explore mutual funds, visit https://www.indmoney.com/mutual-funds/all"
+)
+
 REFUSAL_MESSAGE_PERF = (
     "This assistant does not compute or compare fund returns or past performance. "
     "For official performance data, please refer to the fund's factsheet on INDmoney: "
@@ -108,9 +127,10 @@ REFUSAL_MESSAGE_PERF = (
 )
 
 _MESSAGES = {
-    REFUSE_PII:    REFUSAL_MESSAGE_PII,
-    REFUSE_ADVICE: REFUSAL_MESSAGE_ADVICE,
-    REFUSE_PERF:   REFUSAL_MESSAGE_PERF,
+    REFUSE_PII:     REFUSAL_MESSAGE_PII,
+    REFUSE_ADVICE:  REFUSAL_MESSAGE_ADVICE,
+    REFUSE_COMPARE: REFUSAL_MESSAGE_COMPARE,
+    REFUSE_PERF:    REFUSAL_MESSAGE_PERF,
 }
 
 
@@ -123,8 +143,9 @@ def check(query: str) -> str:
     Returns:
         PASS          — safe to proceed to RAG pipeline
         REFUSE_PII    — query contains personal information
-        REFUSE_ADVICE — query asks for investment advice
-        REFUSE_PERF   — query asks for performance/return data
+        REFUSE_ADVICE  — query asks for investment advice
+        REFUSE_COMPARE — query asks to compare with out-of-scope funds
+        REFUSE_PERF    — query asks for performance/return data
     """
     # Stage 1: PII (check original case — PAN is uppercase)
     for _label, pattern in _PII_PATTERNS:
@@ -143,6 +164,11 @@ def check(query: str) -> str:
     for kw in _ADVICE_KEYWORDS:
         if kw in lower:
             return REFUSE_ADVICE
+
+    # Stage 2b: Comparison / out-of-scope fund
+    for kw in _COMPARE_KEYWORDS:
+        if kw in lower:
+            return REFUSE_COMPARE
 
     # Stage 3: Performance claims
     for kw in _PERFORMANCE_KEYWORDS:
