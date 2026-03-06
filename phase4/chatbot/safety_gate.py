@@ -27,6 +27,24 @@ _PII_PATTERNS: list[tuple[str, re.Pattern]] = [
     ("OTP",     re.compile(r'\b(?:otp|one[\s\-]?time[\s\-]?pass(?:word)?)\b', re.IGNORECASE)),
 ]
 
+# PII intent keywords — catches queries asking about sharing PII even without actual values
+_PII_INTENT_KEYWORDS = [
+    "share my pan",
+    "my pan number",
+    "pan card",
+    "pan number",
+    "share pan",
+    "give pan",
+    "share my aadhaar",
+    "my aadhaar",
+    "aadhaar number",
+    "share my account",
+    "my account number",
+    "share my phone",
+    "my mobile number",
+    "share my mobile",
+]
+
 # ── Stage 2: Advice Keywords ───────────────────────────────────────────────────
 
 _ADVICE_KEYWORDS = [
@@ -111,6 +129,12 @@ def check(query: str) -> str:
     # Stage 1: PII (check original case — PAN is uppercase)
     for _label, pattern in _PII_PATTERNS:
         if pattern.search(query):
+            return REFUSE_PII
+
+    # Stage 1b: PII intent (user asking about sharing PII by name, no actual value)
+    lower_stage1 = query.lower()
+    for kw in _PII_INTENT_KEYWORDS:
+        if kw in lower_stage1:
             return REFUSE_PII
 
     lower = query.lower()

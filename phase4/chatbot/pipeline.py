@@ -169,7 +169,7 @@ def answer(query: str, chat_history: list[dict] | None = None) -> str:
     _REFUSAL_MARKERS = (
         "does not offer investment advice",
         "does not provide performance data",
-        "not able to process information like phone numbers",
+        "not able to process information like",
         "i only have information about the 5 funds",
         "i could not find",
         "please visit",
