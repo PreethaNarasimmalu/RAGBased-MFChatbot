@@ -128,8 +128,30 @@ OUT_OF_SCOPE_MESSAGE = (
     f"{OUT_OF_SCOPE_LINK}"
 )
 
+ASK_FUND_MESSAGE = (
+    "Which fund are you asking about? I currently cover these 5 funds:\n\n"
+    "1. HDFC Small Cap Fund\n"
+    "2. Axis ELSS Tax Saver Fund\n"
+    "3. Axis Large & Mid Cap Fund\n"
+    "4. Axis Nifty 100 Index Fund\n"
+    "5. HDFC Nifty Private Bank ETF\n\n"
+    "Please mention the fund name in your question."
+)
+
 
 # ── Public API ─────────────────────────────────────────────────────────────────
+
+def extract_fund_from_history(chat_history: list[dict]) -> str | None:
+    """
+    Scan the last 6 messages in chat history for a fund mention.
+    Returns the most recently mentioned fund_id, or None.
+    """
+    for msg in reversed(chat_history[-6:]):
+        fund_id = detect_fund(msg.get("content", ""))
+        if fund_id:
+            return fund_id
+    return None
+
 
 def detect_fund(query: str) -> str | None:
     """

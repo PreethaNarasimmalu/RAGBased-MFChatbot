@@ -34,7 +34,7 @@ sys.path.insert(0, str(_PHASE4_CHATBOT))
 # ── Imports ────────────────────────────────────────────────────────────────────
 # safety_gate / preprocessor / prompt_templates use only stdlib — always safe
 from safety_gate import check, PASS, REFUSE_PERF, get_refusal_message
-from query_preprocessor import preprocess, OUT_OF_SCOPE_MESSAGE, FUND_URLS, detect_fund
+from query_preprocessor import preprocess, OUT_OF_SCOPE_MESSAGE, ASK_FUND_MESSAGE, FUND_URLS, detect_fund, extract_fund_from_history
 from prompt_templates import SYSTEM_PROMPT, build_user_message
 import llm_client
 
@@ -51,7 +51,7 @@ _RELEVANCE_THRESHOLD = 1.2
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
-def answer(query: str) -> str:
+def answer(query: str, chat_history: list[dict] | None = None) -> str:
     """
     Process a user query through the full RAG pipeline.
 
@@ -59,7 +59,10 @@ def answer(query: str) -> str:
     or a safe refusal / redirect message.  Never raises to the caller.
 
     Args:
-        query: Raw user input string.
+        query:        Raw user input string.
+        chat_history: Optional list of {"role": ..., "content": ...} dicts
+                      from the current session, used to resolve fund references
+                      like "this fund" or "that fund".
 
     Returns:
         Answer string that always ends with
@@ -88,9 +91,15 @@ def answer(query: str) -> str:
     # ── Stage 2: Preprocess + detect fund ─────────────────────────────────────
     cleaned, fund_id, out_of_scope = preprocess(query)
 
-    # Constraint: out-of-scope MF query → polite redirect
+    # If no fund found in current query, try to resolve from chat history
+    if fund_id is None and chat_history:
+        fund_id = extract_fund_from_history(chat_history)
+        if fund_id:
+            out_of_scope = False  # resolved from context
+
+    # Constraint: out-of-scope MF query → ask which fund or polite redirect
     if out_of_scope:
-        return OUT_OF_SCOPE_MESSAGE
+        return ASK_FUND_MESSAGE
 
     # ── Stage 3: Embed query ───────────────────────────────────────────────────
     try:
