@@ -1,0 +1,14 @@
+{
+  "fund_id": "hdfc_pvt_bank_etf",
+  "fund_name": "HDFC Nifty Private Bank ETF",
+  "amc": "HDFC",
+  "category": "ETF (Sectoral)",
+  "expense_ratio": "0.15%",
+  "exit_load": "0%",
+  "min_sip_amount": "--",
+  "lock_in_period": null,
+  "riskometer": "Very High Risk",
+  "benchmark": "Nifty Private Bank TR INR",
+  "source_url": "https://www.indmoney.com/mutual-funds/hdfc-nifty-private-bank-etf-1042349",
+  "scraped_at": "2026-03-06T01:24:22.735453+00:00"
+}
