@@ -40,7 +40,7 @@ streamlit run phase5/ui/app.py
 
 ## Scope
 
-### AMCs Covered
+### Mutual Funds Covered
 | AMC | Schemes |
 |-----|---------|
 | HDFC | HDFC Small Cap Fund — Direct Growth |
