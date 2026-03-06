@@ -9,10 +9,10 @@
 #   3. Install all Python dependencies (requirements.txt)
 #   4. Install Playwright's Chromium browser (INDmoney is a React SPA)
 #   5. Run the scraper → writes phase2/data/raw/<fund_id>.json for all 5 funds
-#   6. Diff the data/raw/ directory — skip commit if nothing changed
-#   7. Commit and push updated JSON files back to the repo
-#
-# On next Streamlit startup the app reads fresh JSON and rebuilds ChromaDB.
+#   6. Diff the data/raw/ directory — skip steps 7-8 if nothing changed
+#   7. Run ingest.py → rebuilds ChromaDB (upserts 30 chunks, overwrites stale data)
+#   8. Commit and push updated JSON + ChromaDB back to the repo
+#      → Streamlit Cloud detects the new commit and auto-redeploys with fresh data
 #
 # Failure behaviour:
 #   - If the scraper fails (INDmoney blocks, timeout, etc.) the workflow
@@ -89,12 +89,21 @@ jobs:
         run: |
           git diff --quiet phase2/data/raw/ || echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      # ── Step 7: Commit & push (only when data changed) ──────────────────────
-      - name: Commit and push updated fund data
+      # ── Step 7: Rebuild ChromaDB (only when data changed) ───────────────────
+      # Runs ingest.py which reads the fresh JSON and upserts all 30 chunks
+      # into ChromaDB (overwrites stale data, never duplicates).
+      - name: Rebuild ChromaDB from fresh fund data
+        if: steps.git_diff.outputs.changed == 'true'
+        run: python phase3/ingestion/ingest.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      # ── Step 8: Commit & push (only when data changed) ──────────────────────
+      - name: Commit and push updated fund data and ChromaDB
         if: steps.git_diff.outputs.changed == 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add phase2/data/raw/
-          git commit -m "chore: daily scrape $(date -u +'%Y-%m-%d')"
+          git add phase2/data/raw/ chroma_db/
+          git commit -m "chore: daily scrape + ingest $(date -u +'%Y-%m-%d')"
           git push
