@@ -43,6 +43,77 @@ import llm_client
 # ── Config ─────────────────────────────────────────────────────────────────────
 TOP_K = 3
 
+# Human-readable labels for each stored field
+_FIELD_LABELS: dict[str, str] = {
+    "expense_ratio":  "Expense Ratio",
+    "exit_load":      "Exit Load",
+    "min_sip_amount": "Minimum SIP Amount",
+    "lock_in_period": "Lock-in Period",
+    "riskometer":     "Riskometer (Risk Level)",
+    "benchmark":      "Benchmark Index",
+}
+
+# Patterns that signal the user is asking "what info do you have about this fund"
+_INFO_AVAILABILITY_PATTERNS = [
+    "what information do you have",
+    "what info do you have",
+    "what do you know about",
+    "what data do you have",
+    "what details do you have",
+    "what can you tell me about",
+    "what all do you have",
+    "what all information",
+    "what information of this fund",
+    "what info of this fund",
+    "info do you have on this fund",
+    "information do you have on this fund",
+]
+
+
+def _is_info_availability_query(query: str) -> bool:
+    """Return True if the user is asking what information the bot has about a fund."""
+    lower = query.lower()
+    return any(p in lower for p in _INFO_AVAILABILITY_PATTERNS)
+
+
+def _build_info_availability_response(fund_id: str, chunks: list[dict]) -> str:
+    """
+    Build a response listing all available fields for a fund (no values).
+    """
+    from query_preprocessor import FUND_CANONICAL_NAMES, FUND_URLS
+    fund_name = FUND_CANONICAL_NAMES.get(fund_id, fund_id)
+    source_url = FUND_URLS.get(fund_id, "https://www.indmoney.com/mutual-funds/all")
+
+    if not chunks:
+        return (
+            f"I don't currently have any stored information for {fund_name}. "
+            f"You can explore it here: {source_url}"
+        )
+
+    available_fields = [
+        _FIELD_LABELS.get(c["field"], c["field"])
+        for c in chunks
+        if c["field"]
+    ]
+    # Deduplicate while preserving order
+    seen = set()
+    unique_fields = []
+    for f in available_fields:
+        if f not in seen:
+            seen.add(f)
+            unique_fields.append(f)
+
+    field_list = "\n".join(f"  • {f}" for f in unique_fields)
+    scraped_at = chunks[0]["scraped_at"][:10] if chunks else ""
+
+    return (
+        f"For **{fund_name}**, I have the following information available:\n\n"
+        f"{field_list}\n\n"
+        f"Feel free to ask me about any of these!\n\n"
+        f"Last updated: {scraped_at}  \n"
+        f"Source: {source_url}"
+    )
+
 # ChromaDB cosine distance: 0 = identical, 2 = opposite.
 # Chunks with distance > threshold are considered irrelevant.
 _RELEVANCE_THRESHOLD = 1.2
@@ -76,6 +147,20 @@ def answer(query: str) -> str:
     # Constraint: out-of-scope MF query → polite redirect
     if out_of_scope:
         return OUT_OF_SCOPE_MESSAGE
+
+    # ── Stage 2b: Info-availability shortcut ──────────────────────────────────
+    # "What information do you have about this fund?" — list fields, skip LLM.
+    if _is_info_availability_query(cleaned) and fund_id:
+        try:
+            from vector_store import get_all_chunks_for_fund
+            all_chunks = get_all_chunks_for_fund(fund_id)
+            return _build_info_availability_response(fund_id, all_chunks)
+        except Exception as exc:
+            return (
+                f"Vector store unavailable ({exc}). "
+                "Please ensure the database has been populated by running "
+                "`python phase3/ingestion/ingest.py`."
+            )
 
     # ── Stage 3: Embed query ───────────────────────────────────────────────────
     try:

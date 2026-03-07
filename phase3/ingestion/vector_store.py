@@ -118,3 +118,30 @@ def query_chunks(
         kwargs["where"] = where
 
     return collection.query(**kwargs)
+
+
+def get_all_chunks_for_fund(
+    fund_id: str,
+    persist_dir: Path = CHROMA_DIR,
+) -> list[dict]:
+    """
+    Fetch all stored chunks for a given fund_id directly (no similarity search).
+
+    Returns a list of chunk dicts with keys: text, field, source_url, scraped_at.
+    """
+    collection = get_collection(persist_dir)
+    result = collection.get(
+        where={"fund_id": {"$eq": fund_id}},
+        include=["documents", "metadatas"],
+    )
+    chunks = []
+    if result.get("documents"):
+        for doc, meta in zip(result["documents"], result["metadatas"]):
+            chunks.append({
+                "text":       doc,
+                "field":      meta.get("field", ""),
+                "fund_name":  meta.get("fund_name", ""),
+                "source_url": meta.get("source_url", ""),
+                "scraped_at": meta.get("scraped_at", ""),
+            })
+    return chunks
