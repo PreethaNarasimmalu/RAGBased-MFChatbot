@@ -42,19 +42,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 2: Python ──────────────────────────────────────────────────────
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # ── Step 3: Dependencies ─────────────────────────────────────────────────
+      # ── Step 2: Dependencies ─────────────────────────────────────────────────
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      # ── Step 4: Playwright browser ───────────────────────────────────────────
-      # --with-deps installs system packages (libnss3, libgbm, etc.) required
-      # on Ubuntu for Chromium to launch in headless mode.
+      # ── Step 3: Playwright browser ───────────────────────────────────────────
+      # --with-deps handles any missing system packages on the runner OS.
       - name: Install Playwright Chromium browser
         run: playwright install chromium --with-deps
 
@@ -70,12 +63,14 @@ jobs:
       # commit step can be made conditional.
       - name: Check whether scraped data changed
         id: git_diff
+        shell: bash
         run: |
           git diff --quiet phase2/data/raw/ || echo "changed=true" >> "$GITHUB_OUTPUT"
 
       # ── Step 7: Commit & push (only when data changed) ──────────────────────
       - name: Commit and push updated fund data
         if: steps.git_diff.outputs.changed == 'true'
+        shell: bash
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
