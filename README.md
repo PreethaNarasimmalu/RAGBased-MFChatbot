@@ -59,11 +59,15 @@ A facts-only chatbot that answers questions about 5 specific mutual fund schemes
 | [Playwright](https://playwright.dev/python/) + Chromium | Headless browser automation used to scrape INDmoney's React/Next.js SPA pages. Intercepts `/_next/data/` JSON network responses directly (faster and more structured than HTML parsing). Falls back to extracting `__NEXT_DATA__` from the page HTML if the network intercept misses. Runs with `--no-sandbox` for CI/CD compatibility. |
 | [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) | HTML parser used in the fallback path — extracts fund field values from rendered page HTML when the Next.js JSON intercept is unavailable. |
 
+### Deployment
+| Platform | Details |
+|---|---|
+| [Streamlit Cloud](https://streamlit.io/cloud) | Free hosting platform where the chatbot is deployed and publicly accessible. Reads `GROQ_API_KEY` from Streamlit secrets. Auto-redeploys on every git push to the main branch. No server setup needed. |
+
 ### Automation & DevOps
 | Technology | Details |
 |---|---|
 | GitHub Actions (cron) | Scheduled workflow (`.github/workflows/daily_scrape.yml`) runs every day at 04:30 UTC (10 AM IST). Scrapes all 5 fund pages, rebuilds ChromaDB, and commits updated JSON back to the repo only if data changed. Streamlit Cloud detects the push and auto-redeploys. |
-| [Streamlit Cloud](https://streamlit.io/cloud) | Free hosting platform for the deployed chatbot. Reads `GROQ_API_KEY` from Streamlit secrets. Auto-redeploys on every git push to the main branch. |
 
 ### Testing
 | Technology | Details |
