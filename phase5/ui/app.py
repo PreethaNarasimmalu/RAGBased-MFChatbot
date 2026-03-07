@@ -156,7 +156,7 @@ def _process(query: str) -> None:
         with st.spinner("Looking up…"):
             try:
                 from pipeline import answer
-                response = answer(query)
+                response = answer(query, chat_history=st.session_state["messages"])
             except Exception as exc:
                 response = (
                     f"Something went wrong: {exc}. "

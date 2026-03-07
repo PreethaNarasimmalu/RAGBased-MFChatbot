@@ -33,7 +33,7 @@ sys.path.insert(0, str(_PHASE4_CHATBOT))
 # ── Imports ────────────────────────────────────────────────────────────────────
 # safety_gate / preprocessor / prompt_templates use only stdlib — always safe
 from safety_gate import check, PASS, get_refusal_message
-from query_preprocessor import preprocess, OUT_OF_SCOPE_MESSAGE
+from query_preprocessor import preprocess, OUT_OF_SCOPE_MESSAGE, FUND_CANONICAL_NAMES, FUND_URLS
 from prompt_templates import SYSTEM_PROMPT, build_user_message
 import llm_client
 
@@ -60,14 +60,33 @@ _INFO_AVAILABILITY_PATTERNS = [
     "what do you know about",
     "what data do you have",
     "what details do you have",
+    "what are the details you have",
+    "what details you have",
     "what can you tell me about",
     "what all do you have",
     "what all information",
+    "what all details",
     "what information of this fund",
     "what info of this fund",
     "info do you have on this fund",
     "information do you have on this fund",
+    "details do you have on",
+    "details you have about",
+    "details do you have about",
 ]
+
+# Sentinel text embedded in the "which fund?" response so we can detect it in history
+_ASK_FUND_SENTINEL = "Which fund are you asking about?"
+
+ASK_FUND_MESSAGE = (
+    f"{_ASK_FUND_SENTINEL} I currently cover these 5 funds:\n\n"
+    "1. HDFC Small Cap Fund\n"
+    "2. Axis ELSS Tax Saver Fund\n"
+    "3. Axis Large & Mid Cap Fund\n"
+    "4. Axis Nifty 100 Index Fund\n"
+    "5. HDFC Nifty Private Bank ETF\n\n"
+    "Please mention the fund name in your question."
+)
 
 
 def _is_info_availability_query(query: str) -> bool:
@@ -80,7 +99,6 @@ def _build_info_availability_response(fund_id: str, chunks: list[dict]) -> str:
     """
     Build a response listing all available fields for a fund (no values).
     """
-    from query_preprocessor import FUND_CANONICAL_NAMES, FUND_URLS
     fund_name = FUND_CANONICAL_NAMES.get(fund_id, fund_id)
     source_url = FUND_URLS.get(fund_id, "https://www.indmoney.com/mutual-funds/all")
 
@@ -121,7 +139,7 @@ _RELEVANCE_THRESHOLD = 1.2
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
-def answer(query: str) -> str:
+def answer(query: str, chat_history: list[dict] | None = None) -> str:
     """
     Process a user query through the full RAG pipeline.
 
@@ -129,7 +147,10 @@ def answer(query: str) -> str:
     or a safe refusal / redirect message.  Never raises to the caller.
 
     Args:
-        query: Raw user input string.
+        query:        Raw user input string.
+        chat_history: Optional list of prior messages ({"role", "content"}).
+                      Used to detect follow-up fund-name replies after an
+                      info-availability prompt.
 
     Returns:
         Answer string that always ends with
@@ -144,23 +165,41 @@ def answer(query: str) -> str:
     # ── Stage 2: Preprocess + detect fund ─────────────────────────────────────
     cleaned, fund_id, out_of_scope = preprocess(query)
 
+    # ── Stage 2b: Info-availability shortcut (before out-of-scope check) ──────
+    # Handles two sub-cases:
+    #   a) "What details do you have about HDFC Small Cap Fund?" → list fields
+    #   b) "What details do you have about a fund?" (no fund) → ask which fund
+    #   c) User replies with just a fund name after the bot asked "which fund?" → list fields
+    is_info_query = _is_info_availability_query(cleaned)
+
+    # Sub-case (c): fund-only follow-up after the bot asked "which fund?"
+    if not is_info_query and fund_id and chat_history:
+        last_bot = next(
+            (m["content"] for m in reversed(chat_history) if m.get("role") == "assistant"),
+            None,
+        )
+        if last_bot and _ASK_FUND_SENTINEL in last_bot:
+            is_info_query = True
+
+    if is_info_query:
+        if fund_id:
+            try:
+                from vector_store import get_all_chunks_for_fund
+                all_chunks = get_all_chunks_for_fund(fund_id)
+                return _build_info_availability_response(fund_id, all_chunks)
+            except Exception as exc:
+                return (
+                    f"Vector store unavailable ({exc}). "
+                    "Please ensure the database has been populated by running "
+                    "`python phase3/ingestion/ingest.py`."
+                )
+        else:
+            # No fund mentioned — ask the user to specify one
+            return ASK_FUND_MESSAGE
+
     # Constraint: out-of-scope MF query → polite redirect
     if out_of_scope:
         return OUT_OF_SCOPE_MESSAGE
-
-    # ── Stage 2b: Info-availability shortcut ──────────────────────────────────
-    # "What information do you have about this fund?" — list fields, skip LLM.
-    if _is_info_availability_query(cleaned) and fund_id:
-        try:
-            from vector_store import get_all_chunks_for_fund
-            all_chunks = get_all_chunks_for_fund(fund_id)
-            return _build_info_availability_response(fund_id, all_chunks)
-        except Exception as exc:
-            return (
-                f"Vector store unavailable ({exc}). "
-                "Please ensure the database has been populated by running "
-                "`python phase3/ingestion/ingest.py`."
-            )
 
     # ── Stage 3: Embed query ───────────────────────────────────────────────────
     try:
