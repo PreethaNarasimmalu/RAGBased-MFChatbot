@@ -32,19 +32,43 @@ A facts-only chatbot that answers questions about 5 specific mutual fund schemes
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| **Language** | Python 3.11+ | Runtime |
-| **UI** | [Streamlit](https://streamlit.io) | Chat interface (browser) |
-| **Web scraping** | [Playwright](https://playwright.dev/python/) + Chromium | Headless JS execution on React SPA |
-| **HTML parsing** | [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) | Extract fund fields from rendered HTML |
-| **Embedding model** | [sentence-transformers](https://www.sbert.net) `all-MiniLM-L6-v2` | Local 384-dim embeddings (no API call) |
-| **Vector database** | [ChromaDB](https://www.trychroma.com) | Persistent cosine-similarity vector store |
-| **LLM** | [Groq API](https://console.groq.com) — `llama-3.3-70b-versatile` | Answer generation (free tier, LPU-fast) |
-| **Config** | [python-dotenv](https://pypi.org/project/python-dotenv/) | Load `GROQ_API_KEY` from `.env` |
-| **Testing** | [pytest](https://pytest.org) | Unit + integration tests across all phases |
-| **Scheduler** | GitHub Actions cron | Daily scrape + auto-commit at midnight IST |
-| **Data format** | JSON | Raw fund data (`phase2/data/raw/`) |
+### Frontend
+| Technology | Details |
+|---|---|
+| [Streamlit](https://streamlit.io) | Python-based web framework that renders the entire browser UI — chat bubbles, input box, example question chips, sidebar disclaimer, and chat history — all written in Python with no separate HTML/CSS/JS. Custom INDmoney green (`#00B386`) theme applied via `st.markdown` CSS injection. Session state manages conversation history across reruns. |
+
+### Backend
+| Technology | Details |
+|---|---|
+| Python 3.11+ | Core runtime for all phases — scraping, ingestion, chatbot logic, and UI |
+| [Groq API](https://console.groq.com) — `llama-3.3-70b-versatile` | LLM used for answer generation. Called with `temperature=0.0` and `max_tokens=300` for deterministic, concise factual responses. Free tier, runs on Groq's LPU hardware for low-latency inference. |
+| [sentence-transformers](https://www.sbert.net) `all-MiniLM-L6-v2` | Local embedding model (384-dimensional vectors). Runs entirely on-device — no external API call, no cost, no latency overhead. Used to embed both the stored chunks (at ingest time) and the user's query (at retrieval time). |
+| Safety Gate (custom) | Three-stage input filter: (1) PII regex — blocks PAN, Aadhaar, phone, email, OTP; (2) Advice keyword check — blocks investment recommendation queries; (3) Performance keyword check — blocks return/CAGR/historical queries. Fires before the vector DB or LLM is ever touched. |
+| RAG Pipeline (custom) | End-to-end Retrieval-Augmented Generation: embed query → cosine search ChromaDB → filter by relevance threshold (distance ≤ 1.2) → build context → call LLM → append citation (source URL + last updated). |
+| [python-dotenv](https://pypi.org/project/python-dotenv/) | Loads `GROQ_API_KEY` from `.env` file at runtime. |
+
+### Data Storage
+| Technology | Details |
+|---|---|
+| [ChromaDB](https://www.trychroma.com) | Persistent on-disk vector database. Stores 30 embedded chunks (5 funds × 6 fields each). Uses cosine similarity for retrieval. Chunks are upserted by document ID (`fund_id__field`) so re-ingestion is idempotent — no duplicates. |
+| JSON | Raw scraped fund data stored in `phase2/data/raw/<fund_id>.json` (one file per fund). Each file contains 6 fields: `expense_ratio`, `exit_load`, `min_sip_amount`, `lock_in_period`, `riskometer`, `benchmark`. |
+
+### Scraping
+| Technology | Details |
+|---|---|
+| [Playwright](https://playwright.dev/python/) + Chromium | Headless browser automation used to scrape INDmoney's React/Next.js SPA pages. Intercepts `/_next/data/` JSON network responses directly (faster and more structured than HTML parsing). Falls back to extracting `__NEXT_DATA__` from the page HTML if the network intercept misses. Runs with `--no-sandbox` for CI/CD compatibility. |
+| [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) | HTML parser used in the fallback path — extracts fund field values from rendered page HTML when the Next.js JSON intercept is unavailable. |
+
+### Automation & DevOps
+| Technology | Details |
+|---|---|
+| GitHub Actions (cron) | Scheduled workflow (`.github/workflows/daily_scrape.yml`) runs every day at 04:30 UTC (10 AM IST). Scrapes all 5 fund pages, rebuilds ChromaDB, and commits updated JSON back to the repo only if data changed. Streamlit Cloud detects the push and auto-redeploys. |
+| [Streamlit Cloud](https://streamlit.io/cloud) | Free hosting platform for the deployed chatbot. Reads `GROQ_API_KEY` from Streamlit secrets. Auto-redeploys on every git push to the main branch. |
+
+### Testing
+| Technology | Details |
+|---|---|
+| [pytest](https://pytest.org) | Unit and integration tests across all phases. 32+ always-passing unit tests cover the safety gate, query preprocessor, prompt templates, and pipeline refusals — no external dependencies needed. Integration tests additionally require ChromaDB populated and `GROQ_API_KEY` set. |
 
 ---
 
