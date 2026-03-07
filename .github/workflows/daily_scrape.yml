@@ -47,9 +47,12 @@ jobs:
         run: pip install -r requirements.txt
 
       # ── Step 3: Playwright browser ───────────────────────────────────────────
-      # --with-deps handles any missing system packages on the runner OS.
+      # playwright is excluded from requirements.txt (Streamlit Cloud compat),
+      # so install it explicitly here for the scraper job only.
       - name: Install Playwright Chromium browser
-        run: python -m playwright install chromium --with-deps
+        run: |
+          pip install playwright
+          python -m playwright install chromium --with-deps
 
       # ── Step 4: Scrape ───────────────────────────────────────────────────────
       - name: Run scraper for all 5 fund pages
