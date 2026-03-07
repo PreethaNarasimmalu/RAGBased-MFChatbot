@@ -5,13 +5,12 @@
 #
 # What it does:
 #   1. Checkout the repository
-#   2. Set up Python 3.11
-#   3. Install all Python dependencies (requirements.txt)
-#   4. Install Playwright's Chromium browser (INDmoney is a React SPA)
-#   5. Run the scraper → writes phase2/data/raw/<fund_id>.json for all 5 funds
-#   6. Run ingest.py → rebuilds ChromaDB with today's scraped_at timestamp
+#   2. Install all Python dependencies (requirements.txt)
+#   3. Install Playwright's Chromium browser (INDmoney is a React SPA)
+#   4. Run the scraper → writes phase2/data/raw/<fund_id>.json for all 5 funds
+#   5. Run ingest.py → rebuilds ChromaDB with today's scraped_at timestamp
 #      (always runs — ensures "Last updated" shows today's date even if values unchanged)
-#   7. Commit and push updated JSON + ChromaDB back to the repo
+#   6. Commit and push updated JSON + ChromaDB back to the repo
 #      → Streamlit Cloud detects the new commit and auto-redeploys with fresh data
 #
 # Failure behaviour:
@@ -43,45 +42,22 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Step 2: Python ──────────────────────────────────────────────────────
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # ── Step 3: Dependencies ─────────────────────────────────────────────────
+      # ── Step 2: Dependencies ─────────────────────────────────────────────────
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      # ── Step 4: Playwright browser ───────────────────────────────────────────
-      # We install system deps manually to handle the Ubuntu 24.04 package renames
-      # (libasound2 → libasound2t64, libatk → libatk1.0-0t64, etc.) that break
-      # `playwright install --with-deps` on the current ubuntu-latest runner.
-      - name: Install Chromium system dependencies
-        run: |
-          sudo apt-get update -q
-          # Packages with stable names across Ubuntu 22 and 24
-          sudo apt-get install -y \
-            libnss3 libnspr4 libdbus-1-3 libdrm2 libgbm1 \
-            libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 \
-            libpango-1.0-0 libcairo2 libx11-6 libxcb1 libxext6 libxrender1 \
-            libxfixes3
-          # Packages renamed in Ubuntu 24.04 — try new names first, fall back to old
-          sudo apt-get install -y libasound2t64 libatk1.0-0t64 libatk-bridge2.0-0t64 \
-            libcups2t64 2>/dev/null || \
-          sudo apt-get install -y libasound2 libatk1.0-0 libatk-bridge2.0-0 \
-            libcups2
-
+      # ── Step 3: Playwright browser ───────────────────────────────────────────
+      # --with-deps handles any missing system packages on the runner OS.
       - name: Install Playwright Chromium browser
-        run: playwright install chromium
+        run: playwright install chromium --with-deps
 
-      # ── Step 5: Scrape ───────────────────────────────────────────────────────
+      # ── Step 4: Scrape ───────────────────────────────────────────────────────
       - name: Run scraper for all 5 fund pages
         run: python phase2/scraping/scraper.py
         env:
           PYTHONPATH: ${{ github.workspace }}
 
-      # ── Step 6: Rebuild ChromaDB ─────────────────────────────────────────────
+      # ── Step 5: Rebuild ChromaDB ─────────────────────────────────────────────
       # Always runs — even if fund values haven't changed, the fresh scraped_at
       # timestamp is upserted so "Last updated" in the chatbot shows today's date.
       - name: Rebuild ChromaDB from fresh fund data
@@ -89,9 +65,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
 
-      # ── Step 7: Commit & push ────────────────────────────────────────────────
+      # ── Step 6: Commit & push ────────────────────────────────────────────────
       # Always commits so Streamlit Cloud redeploys with today's scraped_at.
       - name: Commit and push updated fund data and ChromaDB
+        shell: bash
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
