@@ -126,7 +126,7 @@ def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
                 status = nav_response.status if nav_response else None
 
                 if status is None or status >= 400:
-                    print(f"    ERROR: HTTP {status} — skipping")
+                    print(f"    ERROR: HTTP {status} - skipping")
                     continue
 
                 if captured.get("data"):
@@ -134,7 +134,7 @@ def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
                     fund_data = parse_fund_json(captured["data"], fund)
                 else:
                     # Fallback: wait a bit more for the SSR __NEXT_DATA__ embed
-                    print("    _next/data not seen — falling back to __NEXT_DATA__ HTML parse")
+                    print("    _next/data not seen -> falling back to __NEXT_DATA__ HTML parse")
                     page.wait_for_load_state("networkidle", timeout=30_000)
                     html      = page.content()
                     fund_data = parse_fund_html(html, fund)
@@ -143,7 +143,7 @@ def scrape_all_funds(delay_seconds: int = 3) -> dict[str, dict]:
                 with open(out_path, "w", encoding="utf-8") as f:
                     json.dump(fund_data, f, ensure_ascii=False, indent=2)
 
-                print(f"    OK → {out_path}")
+                print(f"    OK -> {out_path}")
                 _print_summary(fund_data)
                 results[fund_id] = fund_data
 
@@ -176,7 +176,7 @@ def _print_summary(fund_data: dict) -> None:
     ]
     for key, label in fields:
         value = fund_data.get(key)
-        status = "OK" if value is not None else "— (null)"
+        status = "OK" if value is not None else "- (null)"
         display = value if value is not None else ""
         print(f"      {label:16s}: {status}  {display}")
 
