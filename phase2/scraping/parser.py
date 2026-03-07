@@ -23,7 +23,7 @@ from bs4 import BeautifulSoup
 
 def _extract_next_data(html: str) -> dict:
     """Find and parse the __NEXT_DATA__ JSON script tag embedded in the page."""
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     script_tag = soup.find("script", {"id": "__NEXT_DATA__", "type": "application/json"})
     if not script_tag or not script_tag.string:
         raise ValueError(
