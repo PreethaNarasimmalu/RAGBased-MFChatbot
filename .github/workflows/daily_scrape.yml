@@ -74,10 +74,12 @@ jobs:
       # ── Step 6: Commit & push ────────────────────────────────────────────────
       # Always commits so Streamlit Cloud redeploys with today's scraped_at.
       - name: Commit and push updated fund data and ChromaDB
-        shell: bash
+        shell: pwsh
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add phase2/data/raw/ chroma_db/
-          git commit -m "chore: daily scrape + ingest $(date -u +'%Y-%m-%d')" || echo "Nothing to commit"
+          $date = python -c "import datetime; print(datetime.date.today())"
+          git commit -m "chore: daily scrape + ingest $date"
+          if ($LASTEXITCODE -ne 0) { Write-Host "Nothing to commit"; exit 0 }
           git push
