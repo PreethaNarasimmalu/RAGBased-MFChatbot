@@ -32,6 +32,9 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 30
 
+    env:
+      PYTHONIOENCODING: utf-8   # Force UTF-8 stdout on Windows runner (prevents charmap errors)
+
     permissions:
       contents: write        # Required to git push updated JSON back to repo
 

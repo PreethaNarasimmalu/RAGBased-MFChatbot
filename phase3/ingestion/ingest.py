@@ -56,7 +56,7 @@ def ingest(
 
     # 3. Upsert into ChromaDB
     upsert_chunks(chunks, embeddings, persist_dir=chroma_dir)
-    print(f"[ingest] ChromaDB upsert complete → collection 'mf_faq' at {chroma_dir}")
+    print(f"[ingest] ChromaDB upsert complete -> collection 'mf_faq' at {chroma_dir}")
 
     return len(chunks)
 
