@@ -56,12 +56,15 @@ _FIELD_LABELS: dict[str, str] = {
 # Patterns that signal the user is asking "what info do you have about this fund"
 _INFO_AVAILABILITY_PATTERNS = [
     "what information do you have",
+    "what information you have",
     "what info do you have",
+    "what info you have",
     "what do you know about",
     "what data do you have",
+    "what data you have",
     "what details do you have",
-    "what are the details you have",
     "what details you have",
+    "what are the details you have",
     "what can you tell me about",
     "what all do you have",
     "what all information",
@@ -69,10 +72,15 @@ _INFO_AVAILABILITY_PATTERNS = [
     "what information of this fund",
     "what info of this fund",
     "info do you have on this fund",
+    "info you have on this fund",
     "information do you have on this fund",
+    "information you have on this fund",
+    "data do you have on this fund",
+    "data you have on this fund",
     "details do you have on",
-    "details you have about",
+    "details you have on",
     "details do you have about",
+    "details you have about",
 ]
 
 # Sentinel text embedded in the "which fund?" response so we can detect it in history
