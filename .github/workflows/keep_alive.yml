@@ -2,7 +2,7 @@ name: Keep Streamlit App Alive
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # Every 5 minutes
+    - cron: '40 4 * * *'    # 04:40 UTC = 10:10 AM IST (10 mins after daily scrape)
   workflow_dispatch:
 
 jobs:
