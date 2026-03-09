@@ -1,6 +1,6 @@
 # Phase 7 — Daily Mutual Fund Data Scraper
 #
-# Trigger: every day at 18:30 UTC (midnight IST = 00:00 IST = 18:30 UTC)
+# Trigger: every day at 04:30 UTC (10:00 AM IST = 04:30 UTC)
 # Also triggered manually via workflow_dispatch for on-demand scraping.
 #
 # What it does:
@@ -24,7 +24,7 @@ name: Daily Mutual Fund Data Scrape
 
 on:
   schedule:
-    - cron: '30 18 * * *'   # 18:30 UTC = 00:00 IST (midnight India Standard Time)
+    - cron: '30 4 * * *'    # 04:30 UTC = 10:00 IST (10 AM India Standard Time)
   workflow_dispatch:         # Allow manual trigger from GitHub Actions UI
 
 jobs:
