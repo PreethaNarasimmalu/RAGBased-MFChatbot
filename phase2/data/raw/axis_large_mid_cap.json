@@ -3,12 +3,12 @@
   "fund_name": "Axis Large & Mid Cap Fund - Direct Growth",
   "amc": "Axis",
   "category": "Large & Mid Cap",
-  "expense_ratio": "0.59%",
+  "expense_ratio": "0.6%",
   "exit_load": "1% if redeemed in 0-12 Months",
   "min_sip_amount": "₹100",
   "lock_in_period": null,
   "riskometer": "Very High Risk",
   "benchmark": "Nifty LargeMidcap 250 TR INR",
   "source_url": "https://www.indmoney.com/mutual-funds/axis-large-mid-cap-fund-direct-growth-1002028",
-  "scraped_at": "2026-03-12T05:35:14.560307+00:00"
+  "scraped_at": "2026-03-13T14:36:47.458252+00:00"
 }
