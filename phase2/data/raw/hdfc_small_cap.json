@@ -3,12 +3,12 @@
   "fund_name": "HDFC Small Cap Fund - Direct Growth",
   "amc": "HDFC",
   "category": "Small Cap",
-  "expense_ratio": "0.73%",
+  "expense_ratio": "0.8%",
   "exit_load": "1% if redeemed in 0-1 Years",
   "min_sip_amount": "₹100",
   "lock_in_period": null,
   "riskometer": "Very High Risk",
   "benchmark": "BSE 250 SmallCap TR INR",
   "source_url": "https://www.indmoney.com/mutual-funds/hdfc-small-cap-fund-direct-growth-option-3580",
-  "scraped_at": "2026-04-17T04:31:18.884598+00:00"
+  "scraped_at": "2026-04-18T01:01:15.658059+00:00"
 }
