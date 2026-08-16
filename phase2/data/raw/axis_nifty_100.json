@@ -3,12 +3,12 @@
   "fund_name": "Axis Nifty 100 Index Fund - Direct Growth",
   "amc": "Axis",
   "category": "Index (Large Cap)",
-  "expense_ratio": "0.23%",
+  "expense_ratio": "0.25%",
   "exit_load": "0%",
   "min_sip_amount": "₹100",
   "lock_in_period": null,
   "riskometer": "Very High Risk",
   "benchmark": "Nifty 100 TR INR",
   "source_url": "https://www.indmoney.com/mutual-funds/axis-nifty-100-index-fund-direct-growth-1005056",
-  "scraped_at": "2026-08-15T04:57:56.546059+00:00"
+  "scraped_at": "2026-08-16T07:20:58.687637+00:00"
 }
